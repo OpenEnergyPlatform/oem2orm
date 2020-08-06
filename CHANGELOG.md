@@ -29,16 +29,25 @@ Template:
 ## Current
 
 ### Added
+
+### Changed
+
+
+## [0.2.5] - 2020-08-06
+
+### Changed
+- fix installation error caused by jmespath package dependency
+
+## [0.2.4] - 2020-07-20
+
+### Added
 - Support to setup the OEP API-URL
 - Metadata Up- and download are supported
 - Save downloaded metadata to file
 - Validate metadata using OMI parser v1.4.0
 
 ### Changed
-- IMPORTANT: change functions names in #COMMIT
-
-
-## [0.2.4] - 2020-06-02
+- change functions names
 
 
 ## [0.2.3] - 2020-06-02

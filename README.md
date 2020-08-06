@@ -9,7 +9,7 @@ all Unit-test and UX-test passed. To install Packages listed there
 we recommend using the following command with Pip: 
 
 `
-pip install -i https://test.pypi.org/simple/ oem2orm
+pip install oem2orm
 `
 
 

@@ -8,13 +8,13 @@ with open(path.join(here, "README.md"), encoding="utf-8") as fh:
 
 setuptools.setup(
     name="oem2orm",
-    version="0.2.3",
+    version="0.2.5",
     author="henhuy, jh-RLI",
     author_email="Hendrik.Huyskens@rl-institut.de",
     description="SQLAlchemy module to generate ORM, read from data model in open-energy-metadata(oem-v1.4.0) JSON format",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/OpenEnergyPlatform/data-preprocessing/tree/feature/oep-upload-oem2orm/data-import/oep-upload",
+    url="https://github.com/OpenEnergyPlatform/oem2orm",
     packages=setuptools.find_packages(),
     classifiers=[
         # How mature is this project? Common values are
@@ -28,9 +28,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['sqlalchemy', 'oedialect', 'jmespath'],  # Optional
+    install_requires=['sqlalchemy', 'oedialect', 'requests', 'jmespath'],  # Optional
     project_urls={  # Optional
-        'Bug Reports': 'https://github.com/OpenEnergyPlatform/data-preprocessing/issues',
-        'Source': 'https://github.com/OpenEnergyPlatform/data-preprocessing/tree/feature/oep-upload-oem2orm/data-import/oep-upload/oem2orm',
+        'Bug Reports': 'https://github.com/OpenEnergyPlatform/oem2orm/issues',
+        'Source': 'https://github.com/OpenEnergyPlatform/oem2orm/tree/develop/oem2orm',
     },
 )
