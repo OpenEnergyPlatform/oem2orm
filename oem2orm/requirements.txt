@@ -5,3 +5,4 @@ GeoAlchemy2
 oedialect
 geopandas
 pandas
+omi
