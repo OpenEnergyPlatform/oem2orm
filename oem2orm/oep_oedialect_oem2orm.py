@@ -416,7 +416,7 @@ def setUserToken():
         print("Please provide your OEP-API token.")
 
 
-if __name__ == "__main__":
+def main():
     # Easy cmd usage and testing (development purpose)
 
     logger = logging.getLogger()
@@ -446,4 +446,8 @@ if __name__ == "__main__":
 
     # gdf_awz = gpd.read_file("bsh_seegrenzen_awz.gpkg")
     # print(gdf_awz)
+
+
+if __name__ == "__main__":
+    main()
 

@@ -33,4 +33,7 @@ setuptools.setup(
         'Bug Reports': 'https://github.com/OpenEnergyPlatform/oem2orm/issues',
         'Source': 'https://github.com/OpenEnergyPlatform/oem2orm/tree/develop/oem2orm',
     },
+    entry_points={
+        'console_scripts': ['oem2orm=oem2orm.oep_oedialect_oem2orm:main'],
+    }
 )
