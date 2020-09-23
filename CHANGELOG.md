@@ -29,11 +29,16 @@ Template:
 ## Current
 
 ### Added
+
+### Changed
+
+## [0.2.6] - 2020-09-23
+
+### Added
 - support for datatypes "hstore" and "decimal"
 - provide new example files that work with oem2orm
 
 ### Changed
-
 
 ## [0.2.5] - 2020-08-06
 
