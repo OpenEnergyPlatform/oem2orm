@@ -6,7 +6,7 @@ __author__    = "henhuy"
 import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as psql
 from geoalchemy2 import Geometry
-from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, HSTORE
 
 
 class DatabaseTypes:
@@ -24,6 +24,8 @@ class DatabaseTypes:
         "float": sa.FLOAT,
         "boolean": sa.Boolean,
         "date": sa.Date,
+        "hstore": HSTORE,
+        "decimal": sa.DECIMAL,
 
         # Spatial types
         "geometry point": Geometry("POINT",  spatial_index=False),
