@@ -29,6 +29,8 @@ Template:
 ## Current
 
 ### Added
+- support for datatypes "hstore" and "decimal"
+- provide new example files that work with oem2orm
 
 ### Changed
 
