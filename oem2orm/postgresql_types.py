@@ -24,7 +24,9 @@ class DatabaseTypes:
         "float": sa.FLOAT,
         "boolean": sa.Boolean,
         "date": sa.Date,
-
+        "hstore": sa.hstore,
+        "decimal": sa.DECIMAL,
+        
         # Spatial types
         "geometry point": Geometry("POINT",  spatial_index=False),
         "geom": Geometry("GEOMETRY",  spatial_index=False),
