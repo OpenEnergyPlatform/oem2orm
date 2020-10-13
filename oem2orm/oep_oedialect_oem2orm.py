@@ -442,11 +442,6 @@ def main():
     ordered_tables = order_tables_by_foreign_keys(tables)
     create_tables(db, ordered_tables)
 
-    delete_tables(db, tables)
-
-    # gdf_awz = gpd.read_file("bsh_seegrenzen_awz.gpkg")
-    # print(gdf_awz)
-
 
 if __name__ == "__main__":
     main()
