@@ -258,7 +258,7 @@ def select_oem_dir(oem_folder_name=None, filename=None):
     if oem_folder_name is not None:
         oem_path = pathlib.Path.cwd() / oem_folder_name
         return oem_path
-    elif oem_folder_name is 'default':
+    elif oem_folder_name == 'default':
         pass
         # default_oem_path =
     else:
@@ -350,7 +350,7 @@ def api_updateMdOnTable(metadata):
     logging.info("UPDATE METADATA")
     api_action = setupApiAction(schema, table)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
-    if resp.status_code is "200":
+    if resp.status_code == "200":
         logging.info("   ok.")
         logging.info(api_action.dest_url)
     else:
