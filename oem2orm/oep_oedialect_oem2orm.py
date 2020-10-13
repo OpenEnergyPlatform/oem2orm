@@ -424,7 +424,7 @@ def main():
     metadata_folder = input("Enter metadata folder name:")
     # ToDo: add the review-oemetadata path
     folder = pathlib.Path.cwd() / metadata_folder
-    metadata_files = [str(file) for file in folder.iterdir()]
+    metadata_files = [str(file) for file in folder.iterdir() if str(file).endswith('.json')]
 
     db = setup_db_connection()
 
