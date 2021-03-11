@@ -258,7 +258,7 @@ def select_oem_dir(oem_folder_name=None, filename=None):
     if oem_folder_name is not None:
         oem_path = pathlib.Path.cwd() / oem_folder_name
         return oem_path
-    elif oem_folder_name is 'default':
+    elif oem_folder_name == 'default':
         pass
         # default_oem_path =
     else:
@@ -350,7 +350,7 @@ def api_updateMdOnTable(metadata):
     logging.info("UPDATE METADATA")
     api_action = setupApiAction(schema, table)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
-    if resp.status_code is "200":
+    if resp.status_code == "200":
         logging.info("   ok.")
         logging.info(api_action.dest_url)
     else:
@@ -416,7 +416,7 @@ def setUserToken():
         print("Please provide your OEP-API token.")
 
 
-if __name__ == "__main__":
+def main():
     # Easy cmd usage and testing (development purpose)
 
     logger = logging.getLogger()
@@ -424,7 +424,7 @@ if __name__ == "__main__":
     metadata_folder = input("Enter metadata folder name:")
     # ToDo: add the review-oemetadata path
     folder = pathlib.Path.cwd() / metadata_folder
-    metadata_files = [str(file) for file in folder.iterdir()]
+    metadata_files = [str(file) for file in folder.iterdir() if str(file).endswith('.json')]
 
     db = setup_db_connection()
 
@@ -442,8 +442,7 @@ if __name__ == "__main__":
     ordered_tables = order_tables_by_foreign_keys(tables)
     create_tables(db, ordered_tables)
 
-    delete_tables(db, tables)
 
-    # gdf_awz = gpd.read_file("bsh_seegrenzen_awz.gpkg")
-    # print(gdf_awz)
+if __name__ == "__main__":
+    main()
 

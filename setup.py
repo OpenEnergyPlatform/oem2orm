@@ -28,9 +28,12 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['sqlalchemy', 'oedialect', 'requests', 'jmespath'],  # Optional
+    install_requires=['sqlalchemy', 'oedialect', 'requests', 'jmespath', 'omi'],  # Optional
     project_urls={  # Optional
         'Bug Reports': 'https://github.com/OpenEnergyPlatform/oem2orm/issues',
         'Source': 'https://github.com/OpenEnergyPlatform/oem2orm/tree/develop/oem2orm',
     },
+    entry_points={
+        'console_scripts': ['oem2orm=oem2orm.oep_oedialect_oem2orm:main'],
+    }
 )
