@@ -31,7 +31,19 @@ Template:
 ### Added
 
 ### Changed
+------------
 
+## [0.2.7] - 2021-03-11
+
+### Added
+- enable console usage [PR#8]
+- new package requirement "omi" 
+### Changed
+- fix missing dependency that made pip install fail [ISSUE#1;PR#8]
+### Removed
+- concolse script, remove table delete 
+
+______________________________________________________________________
 ## [0.2.6] - 2020-09-23
 
 ### Added
