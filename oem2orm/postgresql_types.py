@@ -6,7 +6,7 @@ __author__    = "henhuy"
 import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as psql
 from geoalchemy2 import Geometry
-from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, HSTORE
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, HSTORE, TSTZRANGE
 
 
 class DatabaseTypes:
@@ -19,6 +19,7 @@ class DatabaseTypes:
         "json": sa.JSON,
         "text": sa.TEXT,
         "timestamp": sa.TIMESTAMP,
+        "tstzrange": TSTZRANGE,
         "interval": sa.Interval,
         "string": sa.String,
         "float": sa.FLOAT,
