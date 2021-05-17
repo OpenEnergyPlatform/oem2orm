@@ -38,6 +38,7 @@ Template:
 ### Added
 - enable console usage [PR#8]
 - new package requirement "omi" 
+- support for sqlachemy "numeric" data type 
 ### Changed
 - fix missing dependency that made pip install fail [ISSUE#1;PR#8]
 ### Removed
