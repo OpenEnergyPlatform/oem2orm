@@ -26,6 +26,7 @@ class DatabaseTypes:
         "date": sa.Date,
         "hstore": HSTORE,
         "decimal": sa.DECIMAL,
+        "numeric": sa.NUMERIC,
 
         # Spatial types
         "geometry point": Geometry("POINT",  spatial_index=False),
