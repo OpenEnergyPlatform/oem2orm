@@ -11,9 +11,8 @@ def cli():
 
 
 @cli.command()
-@click.option("-f", '--metadata-folder', default=None)
+@click.argument('metadata-folder', type=click.Path(exists=True))
 def create_tables(metadata_folder):
-    metadata_folder = metadata_folder or input("Enter metadata folder name:")
     db = oep_oedialect_oem2orm.setup_db_connection()
     folder = pathlib.Path.cwd() / metadata_folder
     tables = oep_oedialect_oem2orm.collect_tables_from_oem(db, folder)
@@ -21,9 +20,8 @@ def create_tables(metadata_folder):
 
 
 @cli.command()
-@click.option("-f", '--metadata-folder', default=None)
+@click.argument('metadata-folder', type=click.Path(exists=True))
 def delete_tables(metadata_folder):
-    metadata_folder = metadata_folder or input("Enter metadata folder name:")
     db = oep_oedialect_oem2orm.setup_db_connection()
     folder = pathlib.Path.cwd() / metadata_folder
     tables = oep_oedialect_oem2orm.collect_tables_from_oem(db, folder)
