@@ -29,6 +29,7 @@ Template:
 ## [Unreleased] - 20XX-MM-DD
 
 ### Added
+- Metadata upload in case of single table in OEM
 
 ### Changed
 
