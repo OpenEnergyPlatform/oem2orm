@@ -1,7 +1,7 @@
 __copyright__ = "Reiner Lemoine Institut"
-__license__   = "GNU Affero General Public License Version 3 (AGPL-3.0)"
-__url__       = "https://github.com/openego/data_processing/blob/master/LICENSE"
-__author__    = "henhuy, jh-RLI"
+__license__ = "GNU Affero General Public License Version 3 (AGPL-3.0)"
+__url__ = "https://github.com/openego/data_processing/blob/master/LICENSE"
+__author__ = "henhuy, jh-RLI"
 
 import os
 from collections import namedtuple
@@ -14,12 +14,11 @@ import getpass
 import sqlalchemy as sa
 import re
 from omi.dialects.oep.parser import JSONParser_1_4
-from sqlalchemy.orm import sessionmaker
-import oedialect
 import requests
 
-from .postgresql_types import TYPES
+import oedialect
 
+from .postgresql_types import TYPES
 
 # prepare connection string to connect via oep API
 CONNECTION_STRING = "{engine}://{user}:{token}@{host}"
@@ -89,7 +88,7 @@ def setupApiAction(schema, table):
     )
 
     token = setUserToken()
-    headers = {'Authorization': 'Token %s'%token, 'Accept': 'application/json', 'Content-Type': 'application/json'}
+    headers = {'Authorization': 'Token %s' % token, 'Accept': 'application/json', 'Content-Type': 'application/json'}
 
     return API_ACTION(url, headers)
 
@@ -105,12 +104,16 @@ def create_tables(db: DB, tables: List[sa.Table]):
     """
     for table in tables:
         if not db.engine.dialect.has_schema(db.engine, table.schema):
-            logging.info(f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema')
+            logging.info(
+                f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema')
         else:
             if not db.engine.dialect.has_table(db.engine, table.name, table.schema):
                 try:
                     table.create(checkfirst=True)
                     logging.info(f"Created table {table.name}")
+                except oedialect.engine.ConnectionException as ce:
+                    logging.error(f'Error when uploading table "{table.name}".')
+                    raise ce
                 except sa.exc.ProgrammingError:
                     logging.error(f'Table "{table.name}" already exists')
                     raise
@@ -130,21 +133,13 @@ def delete_tables(db: DB, tables: List[sa.Table]):
     ordered_tables = order_tables_by_foreign_keys(tables)
     reversed_tables = reversed(ordered_tables)
 
-    print("Please confirm that you would like to drop the following tables:")
-    for n, tab in enumerate(tables):
-        print("{: 3d}. {}".format(n, tab))
-
-        print("Please confirm with either of the choices below:\n" +
-              "- yes\n" +
-              "- no\n" +
-              "- the indexes to drop in the format 0, 2, 3, 5")
+    confirmation = None
+    while confirmation not in ("y", "n"):
         confirmation = input(
-            "Please type the choice completely as there is no default choice.")
-        if re.fullmatch('[Yy]es', confirmation):
-            for tab in reversed_tables:
-                tab.drop(db.engine, checkfirst=True)
-        elif re.fullmatch('[Nn]o', confirmation):
-            print("Cancelled dropping of tables")
+            f"Do you want to drop following tables ({', '.join(map(str, tables))})? [y/n]")
+    if confirmation == "y":
+        for table in reversed_tables:
+            table.drop(db.engine, checkfirst=True)
 
 
 def order_tables_by_foreign_keys(tables: List[sa.Table]):
@@ -241,7 +236,8 @@ def check_oep_api_schema_whitelist(oem_schema):
     if oem_schema in api_open_schema:
         return True
     else:
-        logging.info("The OEP-API does not allow to write un-reviewed data to another schema then model_draft or sandbox")
+        logging.info(
+            "The OEP-API does not allow to write un-reviewed data to another schema then model_draft or sandbox")
         return False
 
 
@@ -267,7 +263,7 @@ def select_oem_dir(oem_folder_name=None, filename=None):
 
 def collect_tables_from_oem(db: DB, oem_folder_path):
     tables = []
-    metadata_files = [str(file) for file in oem_folder_path.iterdir()]
+    metadata_files = [str(file) for file in oem_folder_path.iterdir() if file.suffix == ".json"]
 
     for metadata_file in metadata_files:
         try:
@@ -280,9 +276,7 @@ def collect_tables_from_oem(db: DB, oem_folder_path):
             raise
         tables.extend(md_tables)
 
-    fk_ordered_tables = order_tables_by_foreign_keys(tables)
-
-    return fk_ordered_tables
+    return order_tables_by_foreign_keys(tables)
 
 
 def load_json(filepath):
@@ -414,35 +408,3 @@ def setUserToken():
         return token
     else:
         print("Please provide your OEP-API token.")
-
-
-def main():
-    # Easy cmd usage and testing (development purpose)
-
-    logger = logging.getLogger()
-
-    metadata_folder = input("Enter metadata folder name:")
-    # ToDo: add the review-oemetadata path
-    folder = pathlib.Path.cwd() / metadata_folder
-    metadata_files = [str(file) for file in folder.iterdir() if str(file).endswith('.json')]
-
-    db = setup_db_connection()
-
-    tables = []
-    for metadata_file in metadata_files:
-        try:
-            md_tables = create_tables_from_metadata_file(db, metadata_file)
-            logger.info(md_tables)
-        except:
-            logger.error(
-                f'Could not generate tables from metadatafile: "{metadata_file}"'
-            )
-            raise
-        tables.extend(md_tables)
-    ordered_tables = order_tables_by_foreign_keys(tables)
-    create_tables(db, ordered_tables)
-
-
-if __name__ == "__main__":
-    main()
-

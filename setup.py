@@ -8,7 +8,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as fh:
 
 setuptools.setup(
     name="oem2orm",
-    version="0.2.8",
+    version="0.2.10",
     author="henhuy, jh-RLI",
     author_email="Hendrik.Huyskens@rl-institut.de",
     description="SQLAlchemy module to generate ORM, read from data model (oedatamodel) in open-energy-metadata(oem-v1.4.0) JSON format",
@@ -28,12 +28,12 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['sqlalchemy', 'oedialect', 'requests', 'jmespath', 'omi'],  # Optional
+    install_requires=['sqlalchemy==1.3.14', 'oedialect', 'requests', 'jmespath', 'omi', 'click'],  # Optional
     project_urls={  # Optional
         'Bug Reports': 'https://github.com/OpenEnergyPlatform/oem2orm/issues',
         'Source': 'https://github.com/OpenEnergyPlatform/oem2orm/tree/develop/oem2orm',
     },
     entry_points={
-        'console_scripts': ['oem2orm=oem2orm.oep_oedialect_oem2orm:main'],
+        'console_scripts': ['oem2orm=oem2orm.main:cli'],
     }
 )

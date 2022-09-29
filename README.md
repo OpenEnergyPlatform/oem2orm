@@ -4,9 +4,16 @@ Create database tables (and schema) from oemetadata json file(s)
 
 ## Installation:
 
+You can install pacakge using standard python installation:
 `
 pip install oem2orm
 `
+
+or if you interested in CLI-version only you can install it using pipx (pipx must be installed):
+`
+pipx install oem2orm
+`
+see [Pipx-Documentation](https://pypa.github.io/pipx/) for further information.
 
 
 ## Usage:
