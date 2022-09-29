@@ -5,7 +5,7 @@ __author__ = "henhuy, jh-RLI"
 
 import os
 from collections import namedtuple
-from typing import List
+from typing import List, Union
 import json
 import logging
 import pathlib
@@ -151,18 +151,21 @@ def order_tables_by_foreign_keys(tables: List[sa.Table]):
     return sorted(tables, key=lambda x: len(x.foreign_keys))
 
 
-def create_tables_from_metadata_file(db: DB, metadata_file: str) -> List[sa.Table]:
+def create_tables_from_metadata_file(db: DB, metadata_file: Union[str, dict]) -> List[sa.Table]:
     """
     Takes a metadata file in oem format (tested with oem v1.4.0) and
     generates a sqlalchemy ORM Table representation. The oem can contain
     multiple Tables, this function will return one or multiple sa table objects.
 
     :param db: API
-    :param metadata_file: json file (oem 1.4.0)
+    :param metadata_file: json/json file (oem 1.4.0)
     :return: collection of sqlalchemy table objects
     """
-    with open(metadata_file, "r") as metadata_json:
-        metadata = json.loads(metadata_json.read())
+    if isinstance(metadata_file, str):
+        with open(metadata_file, "r") as metadata_json:
+            metadata = json.loads(metadata_json.read())
+    else:
+        metadata = metadata_file
     tables_raw = jmespath.search("resources", metadata)
 
     tables = []
