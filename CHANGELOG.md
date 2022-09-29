@@ -29,9 +29,11 @@ Template:
 ## Current
 
 ### Added
+- Option to create tables from OEM JSON instead of file
 
 ### Changed
-------------
+
+---
 
 ## [0.2.7] - 2021-03-11
 
