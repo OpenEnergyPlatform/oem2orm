@@ -4,8 +4,7 @@ on:
   push:
     branches: 
       - test-release
-      
-   pull_request:
+  pull_request:
     branches: 
       - 'release/*'
 
