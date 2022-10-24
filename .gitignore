@@ -41,6 +41,7 @@ htmlcov
 *.iml
 *.komodoproject
 /.vscode
+/oem2orm/__pycache__
 
 # Complexity
 output/*.html
