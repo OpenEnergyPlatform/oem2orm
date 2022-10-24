@@ -31,13 +31,24 @@ Template:
 ### Added
 
 ### Changed
-------------
+---
 
+## [0.3.0] - 2022-10-24
+### Added
+- Option to create tables from OEM JSON instead of file
+- New module to check if metadata is oep compliant. Can check (omi's 1 parse 2 compile) oemetadata v1.5 and v1.4 (PR#23)
+- Add PYPI release workflow to automate python package releases for pypi test and pypi official (PR#22)
+
+### Changed
+- omi_validateMD was outdated and now runs the new oep compliance checks.  
+
+______________________________________________________________________
 ## [0.2.7] - 2021-03-11
 
 ### Added
 - enable console usage [PR#8]
 - new package requirement "omi" 
+- support for sqlachemy "numeric" data type 
 ### Changed
 - fix missing dependency that made pip install fail [ISSUE#1;PR#8]
 ### Removed

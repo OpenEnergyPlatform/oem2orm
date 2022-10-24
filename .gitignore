@@ -16,6 +16,7 @@ lib
 lib64
 venv*/
 pyvenv*/
+/env
 
 # Installer logs
 pip-log.txt
@@ -39,6 +40,8 @@ htmlcov
 .idea
 *.iml
 *.komodoproject
+/.vscode
+/oem2orm/__pycache__
 
 # Complexity
 output/*.html
