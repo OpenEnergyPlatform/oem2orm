@@ -13,12 +13,12 @@ import jmespath
 import getpass
 import sqlalchemy as sa
 import re
-from omi.dialects.oep.parser import JSONParser_1_4
 import requests
 
 import oedialect
 
 from .postgresql_types import TYPES
+from oep_compliance import run_metadata_checks
 
 # prepare connection string to connect via oep API
 CONNECTION_STRING = "{engine}://{user}:{token}@{host}"
@@ -44,10 +44,12 @@ def setup_logger():
     :return: logging.INFO or none
     """
     logger_level = input("Display logging information[Yes] or [No]:")
-    if re.fullmatch('[Yy]es', logger_level):
-        print('logging activated')
-        return logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
-    elif re.fullmatch('[Nn]o', logger_level):
+    if re.fullmatch("[Yy]es", logger_level):
+        print("logging activated")
+        return logging.basicConfig(
+            format="%(levelname)s:%(message)s", level=logging.INFO
+        )
+    elif re.fullmatch("[Nn]o", logger_level):
         pass
 
 
@@ -70,9 +72,7 @@ def setup_db_connection(engine="postgresql+oedialect", host="openenergy-platform
 
     # Generate connection string:
     conn_str = CONNECTION_STRING
-    conn_str = conn_str.format(
-        engine=engine, user=user, token=token, host=host
-    )
+    conn_str = conn_str.format(engine=engine, user=user, token=token, host=host)
 
     engine = sa.create_engine(conn_str)
     metadata = sa.MetaData(bind=engine)
@@ -88,7 +88,11 @@ def setupApiAction(schema, table):
     )
 
     token = setUserToken()
-    headers = {'Authorization': 'Token %s' % token, 'Accept': 'application/json', 'Content-Type': 'application/json'}
+    headers = {
+        "Authorization": "Token %s" % token,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
 
     return API_ACTION(url, headers)
 
@@ -105,7 +109,8 @@ def create_tables(db: DB, tables: List[sa.Table]):
     for table in tables:
         if not db.engine.dialect.has_schema(db.engine, table.schema):
             logging.info(
-                f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema')
+                f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
+            )
         else:
             if not db.engine.dialect.has_table(db.engine, table.name, table.schema):
                 try:
@@ -136,7 +141,8 @@ def delete_tables(db: DB, tables: List[sa.Table]):
     confirmation = None
     while confirmation not in ("y", "n"):
         confirmation = input(
-            f"Do you want to drop following tables ({', '.join(map(str, tables))})? [y/n]")
+            f"Do you want to drop following tables ({', '.join(map(str, tables))})? [y/n]"
+        )
     if confirmation == "y":
         for table in reversed_tables:
             table.drop(db.engine, checkfirst=True)
@@ -151,7 +157,9 @@ def order_tables_by_foreign_keys(tables: List[sa.Table]):
     return sorted(tables, key=lambda x: len(x.foreign_keys))
 
 
-def create_tables_from_metadata_file(db: DB, metadata_file: Union[str, dict]) -> List[sa.Table]:
+def create_tables_from_metadata_file(
+    db: DB, metadata_file: Union[str, dict]
+) -> List[sa.Table]:
     """
     Takes a metadata file in oem format (tested with oem v1.4.0) and
     generates a sqlalchemy ORM Table representation. The oem can contain
@@ -219,11 +227,29 @@ def create_tables_from_metadata_file(db: DB, metadata_file: Union[str, dict]) ->
             columns.append(column)
 
         if check_oep_api_schema_whitelist(schema):
-            tables.append(sa.Table(table_name, db.metadata, *columns, schema=schema, extend_existing=True))
+            tables.append(
+                sa.Table(
+                    table_name,
+                    db.metadata,
+                    *columns,
+                    schema=schema,
+                    extend_existing=True,
+                )
+            )
         else:
-            logging.info("The current schema:'" + schema + "' is changed to 'model_draft'")
+            logging.info(
+                "The current schema:'" + schema + "' is changed to 'model_draft'"
+            )
             schema = "model_draft"
-            tables.append(sa.Table(table_name, db.metadata, *columns, schema=schema, extend_existing=True))
+            tables.append(
+                sa.Table(
+                    table_name,
+                    db.metadata,
+                    *columns,
+                    schema=schema,
+                    extend_existing=True,
+                )
+            )
     return tables
 
 
@@ -234,13 +260,14 @@ def check_oep_api_schema_whitelist(oem_schema):
     :param oem_schema:string
     :return: bool
     """
-    api_open_schema = ['model_draft', 'sandbox']
+    api_open_schema = ["model_draft", "sandbox"]
 
     if oem_schema in api_open_schema:
         return True
     else:
         logging.info(
-            "The OEP-API does not allow to write un-reviewed data to another schema then model_draft or sandbox")
+            "The OEP-API does not allow to write un-reviewed data to another schema then model_draft or sandbox"
+        )
         return False
 
 
@@ -257,7 +284,7 @@ def select_oem_dir(oem_folder_name=None, filename=None):
     if oem_folder_name is not None:
         oem_path = pathlib.Path.cwd() / oem_folder_name
         return oem_path
-    elif oem_folder_name == 'default':
+    elif oem_folder_name == "default":
         pass
         # default_oem_path =
     else:
@@ -266,7 +293,9 @@ def select_oem_dir(oem_folder_name=None, filename=None):
 
 def collect_tables_from_oem(db: DB, oem_folder_path):
     tables = []
-    metadata_files = [str(file) for file in oem_folder_path.iterdir() if file.suffix == ".json"]
+    metadata_files = [
+        str(file) for file in oem_folder_path.iterdir() if file.suffix == ".json"
+    ]
 
     for metadata_file in metadata_files:
         try:
@@ -338,9 +367,7 @@ def parseDatapackageToString(oem_folder_path, datapackage_name=None, table_name=
 
 
 def api_updateMdOnTable(metadata):
-    """
-
-    """
+    """ """
     schema = getTableSchemaNameFromOEM(metadata)[0]
     table = getTableSchemaNameFromOEM(metadata)[1]
 
@@ -357,8 +384,7 @@ def api_updateMdOnTable(metadata):
 
 
 def api_downloadMd(schema, table):
-    """
-    """
+    """ """
     logging.info("DOWNLOAD_METADATA")
     api_action = setupApiAction(schema, table)
     res = requests.get(api_action.dest_url)
@@ -377,15 +403,9 @@ def moveTableToSchema(engine, destination_schema):
     raise NotImplemented
 
 
-def omi_validateMd(data):
-    OmiParser = JSONParser_1_4()
-    logging.info("VALIDATE")
-    try:
-        OmiParser.parse(data)
-        logging.info("The metadatafile is valid for OEM version 1.4.0")
-    except TypeError as e:
-        logging.error("Something went wrong, please make sure that the input OEM is provided in string format")
-        logging.error(e)
+# TODO: rename or remove this function - functionality moved to oep_complicance module, keep to avoide 3. party implementation errors
+def omi_validateMd(data: dict):
+    run_metadata_checks(oemetadata=data)
 
 
 def getTableSchemaNameFromOEM(metadata):
