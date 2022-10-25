@@ -31,6 +31,7 @@ Template:
 ### Added
 
 ### Changed
+- fix module not installed error after pip install and import of oem2orm PR(#26)
 ---
 
 ## [0.3.0] - 2022-10-24
