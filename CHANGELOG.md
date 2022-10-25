@@ -32,7 +32,13 @@ Template:
 
 ### Changed
 ---
+## [0.3.1] - 2022-10-24
 
+### Added
+
+### Changed
+- fix module not installed error after pip install and import of oem2orm PR(#26)
+______________________________________________________________________
 ## [0.3.0] - 2022-10-24
 ### Added
 - Option to create tables from OEM JSON instead of file

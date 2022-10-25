@@ -17,8 +17,8 @@ import requests
 
 import oedialect
 
-from .postgresql_types import TYPES
-from oep_compliance import run_metadata_checks
+from oem2orm.postgresql_types import TYPES
+from oem2orm.oep_compliance import run_metadata_checks
 
 # prepare connection string to connect via oep API
 CONNECTION_STRING = "{engine}://{user}:{token}@{host}"
