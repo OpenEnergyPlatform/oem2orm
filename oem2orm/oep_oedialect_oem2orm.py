@@ -117,11 +117,13 @@ def create_tables(db: DB, tables: List[sa.Table]):
                     table.create(checkfirst=True)
                     logging.info(f"Created table {table.name}")
                 except oedialect.engine.ConnectionException as ce:
-                    logging.error(f'Error when uploading table "{table.name}".')
-                    raise ce
-                except sa.exc.ProgrammingError:
-                    logging.error(f'Table "{table.name}" already exists')
-                    raise
+                    error_msg = f'Error when uploading table "{table.name}".'
+                    logging.error(error_msg)
+                    raise DatabaseError(error_msg) from ce
+                except sa.exc.ProgrammingError as pe:
+                    error_msg = f'Table "{table.name}" already exists.'
+                    logging.error(error_msg)
+                    raise DatabaseError(error_msg) from pe
 
 
 def delete_tables(db: DB, tables: List[sa.Table]):
