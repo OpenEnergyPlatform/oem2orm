@@ -108,9 +108,9 @@ def create_tables(db: DB, tables: List[sa.Table]):
     """
     for table in tables:
         if not db.engine.dialect.has_schema(db.engine, table.schema):
-            logging.info(
-                f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
-            )
+            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
+            logging.info(error_msg)
+            raise DatabaseError(error_msg)
         else:
             if not db.engine.dialect.has_table(db.engine, table.name, table.schema):
                 try:
