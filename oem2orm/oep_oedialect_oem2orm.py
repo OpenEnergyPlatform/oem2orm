@@ -79,7 +79,7 @@ def setup_db_connection(engine="postgresql+oedialect", host="openenergy-platform
     return DB(engine, metadata)
 
 
-def setupApiAction(schema, table):
+def setupApiAction(schema, table, token=None):
     API_ACTION = namedtuple("API_Action", ["dest_url", "headers"])
     OEP_URL = "https://openenergy-platform.org"
 
@@ -87,7 +87,7 @@ def setupApiAction(schema, table):
         schema=schema, table=table
     )
 
-    token = setUserToken()
+    token = token if token else setUserToken()
     headers = {
         "Authorization": "Token %s" % token,
         "Accept": "application/json",
@@ -385,10 +385,10 @@ def api_updateMdOnTable(metadata):
         logging.info(resp.status_code)
 
 
-def api_downloadMd(schema, table):
+def api_downloadMd(schema, table, token=None):
     """ """
     logging.info("DOWNLOAD_METADATA")
-    api_action = setupApiAction(schema, table)
+    api_action = setupApiAction(schema, table, token)
     res = requests.get(api_action.dest_url)
     res = res.json()
     logging.info("   ok.")

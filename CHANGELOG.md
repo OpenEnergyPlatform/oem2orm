@@ -29,9 +29,10 @@ Template:
 ## Current
 
 ### Added
+- token can be passed as parameter (to support usage in APIs)
 
 ### Changed
----
+______________________________________________________________________
 ## [0.3.1] - 2022-10-24
 
 ### Added
