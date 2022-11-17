@@ -368,13 +368,13 @@ def parseDatapackageToString(oem_folder_path, datapackage_name=None, table_name=
     raise NotImplemented
 
 
-def api_updateMdOnTable(metadata):
+def api_updateMdOnTable(metadata, token=None):
     """ """
     schema = getTableSchemaNameFromOEM(metadata)[0]
     table = getTableSchemaNameFromOEM(metadata)[1]
 
     logging.info("UPDATE METADATA")
-    api_action = setupApiAction(schema, table)
+    api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
     if resp.status_code == "200":
         logging.info("   ok.")
