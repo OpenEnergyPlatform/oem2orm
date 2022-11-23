@@ -30,6 +30,8 @@ Template:
 
 ### Added
 ### Changed
+- MetadataError is thrown if uploading metadata to OEP fails
+
 ### Removed
 
 ______________________________________________________________________

@@ -380,9 +380,11 @@ def api_updateMdOnTable(metadata, token=None):
         logging.info("   ok.")
         logging.info(api_action.dest_url)
     else:
-        logging.info(resp.json())
+        error_msg = resp.json()
+        logging.info(error_msg)
         logging.info("HTTP status code: ")
         logging.info(resp.status_code)
+        raise MetadataError(f"Uploading of metadata failed. Response from OEP: {error_msg}")
 
 
 def api_downloadMd(schema, table, token=None):
