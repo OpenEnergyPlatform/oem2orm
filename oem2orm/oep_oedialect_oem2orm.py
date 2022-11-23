@@ -376,7 +376,7 @@ def api_updateMdOnTable(metadata, token=None):
     logging.info("UPDATE METADATA")
     api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
-    if resp.status_code == "200":
+    if resp.status_code == 200:
         logging.info("   ok.")
         logging.info(api_action.dest_url)
     else:
