@@ -376,13 +376,15 @@ def api_updateMdOnTable(metadata, token=None):
     logging.info("UPDATE METADATA")
     api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
-    if resp.status_code == "200":
+    if resp.status_code == 200:
         logging.info("   ok.")
         logging.info(api_action.dest_url)
     else:
-        logging.info(resp.json())
+        error_msg = resp.json()
+        logging.info(error_msg)
         logging.info("HTTP status code: ")
         logging.info(resp.status_code)
+        raise MetadataError(f"Uploading of metadata failed. Response from OEP: {error_msg}")
 
 
 def api_downloadMd(schema, table, token=None):
