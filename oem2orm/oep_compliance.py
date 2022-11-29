@@ -6,21 +6,23 @@ requirments from other oefamily software modules like omi.
 
 
 """
-
-from distutils.errors import CompileError
+import logging
 import pathlib
+import json
+
 from omi.dialects.oep.parser import ParserException
 from omi.structure import Compilable
 
 from omi.dialects.oep import OEP_V_1_4_Dialect, OEP_V_1_5_Dialect
 from omi.dialects.oep.compiler import JSONCompiler
 
-import json
+from omi.dialects.oep.parser import JSONParser
 
 # instances of metadata parsers / compilers, order of priority
 METADATA_PARSERS = [OEP_V_1_5_Dialect(), OEP_V_1_4_Dialect()]
 METADATA_COMPILERS = [OEP_V_1_5_Dialect(), OEP_V_1_4_Dialect(), JSONCompiler()]
 
+logger = logging.getLogger()
 
 def read_input_json(file_path: pathlib.Path = "tests/data/metadata_v15.json"):
     with open(file_path, "r", encoding="utf-8") as f:
@@ -38,11 +40,6 @@ def try_parse_metadata(inp):
         The first component is the result of the parsing procedure or `None` if
         the parsing failed. The second component is None, if the parsing failed,
         otherwise an error message.
-    Examples:
-        >>> from api.actions import try_parse_metadata
-        >>> result, error = try_parse_metadata('{"id":"id"}')
-        >>> error is None
-        True
     """
 
     if isinstance(inp, Compilable):
@@ -126,12 +123,12 @@ def check_oemetadata_is_oep_compatible(metadata):
 # -------------------------------------------
 
 
-def run_metadata_checks(oemetadata: dict = None, oemetadata_path: str = None):
+def run_metadata_checks(oemetadata: dict = None, oemetadata_path: str = None,  check_jsonschema: bool = False):
     """
     Runs metadata checks includes:
         - basic oep compliant check - tested by using omi's parsing and compiling
 
-        Not included:
+        Optional - included:
         - jsonschema valdiation
 
     Args:
@@ -159,8 +156,19 @@ def run_metadata_checks(oemetadata: dict = None, oemetadata_path: str = None):
     if oemetadata is not None and oemetadata_path is None:
         metadata = oemetadata
 
+    logger.info("Check if metadata is parsable and compileable by omi.")
     check_oemetadata_is_oep_compatible(metadata=metadata)
 
+    if check_jsonschema:
+        logger.info("Check if metadata is valid against the jsonschema.")
+        parser_validation = JSONParser()
+        schema = parser_validation.get_schema_by_metadata_version(metadata=metadata)
+        result = parser_validation.is_valid(inp=metadata, schema=schema)
+        if result is False:
+            result = result, parser_validation.validate(metadata=metadata, save_report=True)
+        
+        return result
+            
 
 if __name__ == "__main__":
     correct_v15_test_data = "tests/data/metadata_v15.json"
@@ -169,7 +177,7 @@ if __name__ == "__main__":
 
     meta = read_input_json(file_path=correct_v15_test_data)
     print("Check v15 metadata from file!")
-    run_metadata_checks(oemetadata_path=correct_v15_test_data)
+    result = run_metadata_checks(oemetadata_path=correct_v15_test_data, check_jsonschema=True)
     print("Check v15 metadata from object!")
     run_metadata_checks(oemetadata=meta)
 

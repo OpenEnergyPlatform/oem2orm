@@ -79,7 +79,7 @@ def setup_db_connection(engine="postgresql+oedialect", host="openenergy-platform
     return DB(engine, metadata)
 
 
-def setupApiAction(schema, table):
+def setupApiAction(schema, table, token=None):
     API_ACTION = namedtuple("API_Action", ["dest_url", "headers"])
     OEP_URL = "https://openenergy-platform.org"
 
@@ -87,7 +87,7 @@ def setupApiAction(schema, table):
         schema=schema, table=table
     )
 
-    token = setUserToken()
+    token = token if token else setUserToken()
     headers = {
         "Authorization": "Token %s" % token,
         "Accept": "application/json",
@@ -108,20 +108,22 @@ def create_tables(db: DB, tables: List[sa.Table]):
     """
     for table in tables:
         if not db.engine.dialect.has_schema(db.engine, table.schema):
-            logging.info(
-                f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
-            )
+            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
+            logging.info(error_msg)
+            raise DatabaseError(error_msg)
         else:
             if not db.engine.dialect.has_table(db.engine, table.name, table.schema):
                 try:
                     table.create(checkfirst=True)
                     logging.info(f"Created table {table.name}")
                 except oedialect.engine.ConnectionException as ce:
-                    logging.error(f'Error when uploading table "{table.name}".')
-                    raise ce
-                except sa.exc.ProgrammingError:
-                    logging.error(f'Table "{table.name}" already exists')
-                    raise
+                    error_msg = f'Error when uploading table "{table.name}".'
+                    logging.error(error_msg)
+                    raise DatabaseError(error_msg) from ce
+                except sa.exc.ProgrammingError as pe:
+                    error_msg = f'Table "{table.name}" already exists.'
+                    logging.error(error_msg)
+                    raise DatabaseError(error_msg) from pe
 
 
 def delete_tables(db: DB, tables: List[sa.Table]):
@@ -366,27 +368,29 @@ def parseDatapackageToString(oem_folder_path, datapackage_name=None, table_name=
     raise NotImplemented
 
 
-def api_updateMdOnTable(metadata):
+def api_updateMdOnTable(metadata, token=None):
     """ """
     schema = getTableSchemaNameFromOEM(metadata)[0]
     table = getTableSchemaNameFromOEM(metadata)[1]
 
     logging.info("UPDATE METADATA")
-    api_action = setupApiAction(schema, table)
+    api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
-    if resp.status_code == "200":
+    if resp.status_code == 200:
         logging.info("   ok.")
         logging.info(api_action.dest_url)
     else:
-        logging.info(resp.json())
+        error_msg = resp.json()
+        logging.info(error_msg)
         logging.info("HTTP status code: ")
         logging.info(resp.status_code)
+        raise MetadataError(f"Uploading of metadata failed. Response from OEP: {error_msg}")
 
 
-def api_downloadMd(schema, table):
+def api_downloadMd(schema, table, token=None):
     """ """
     logging.info("DOWNLOAD_METADATA")
-    api_action = setupApiAction(schema, table)
+    api_action = setupApiAction(schema, table, token)
     res = requests.get(api_action.dest_url)
     res = res.json()
     logging.info("   ok.")
@@ -404,8 +408,8 @@ def moveTableToSchema(engine, destination_schema):
 
 
 # TODO: rename or remove this function - functionality moved to oep_complicance module, keep to avoide 3. party implementation errors
-def omi_validateMd(data: dict):
-    run_metadata_checks(oemetadata=data)
+def omi_validateMd(data: dict, jsonschema_validation=False):
+    run_metadata_checks(oemetadata=data, check_jsonschema=jsonschema_validation)
 
 
 def getTableSchemaNameFromOEM(metadata):

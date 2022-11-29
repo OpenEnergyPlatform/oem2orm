@@ -26,20 +26,34 @@ Template:
 ### Removed
 - basic description [#PR/#Issue/#Commit]
 ```
-## Current
+## [Unreleased] - 20XX-MM-DD
 
 ### Added
 
 ### Changed
----
-## [0.3.1] - 2022-10-24
+
+### Removed
+
+______________________________________________________________________
+## [0.3.2] - 2022-11-29
 
 ### Added
+- token can be passed as parameter (to support usage in APIs)
+
+### Changed
+- Error is raised if schema does not exist
+- Metadata compilance checks now inculue optinal jsonschema validation for metadata (PR#32)
+- MetadataError is thrown if uploading metadata to OEP fails
+
+______________________________________________________________________
+## [0.3.1] - 2022-10-24
 
 ### Changed
 - fix module not installed error after pip install and import of oem2orm PR(#26)
+
 ______________________________________________________________________
 ## [0.3.0] - 2022-10-24
+
 ### Added
 - Option to create tables from OEM JSON instead of file
 - New module to check if metadata is oep compliant. Can check (omi's 1 parse 2 compile) oemetadata v1.5 and v1.4 (PR#23)
@@ -55,10 +69,12 @@ ______________________________________________________________________
 - enable console usage [PR#8]
 - new package requirement "omi" 
 - support for sqlachemy "numeric" data type 
+
 ### Changed
 - fix missing dependency that made pip install fail [ISSUE#1;PR#8]
+
 ### Removed
-- concolse script, remove table delete 
+- console script, remove table delete 
 
 ______________________________________________________________________
 ## [0.2.6] - 2020-09-23
@@ -67,13 +83,13 @@ ______________________________________________________________________
 - support for datatypes "hstore" and "decimal"
 - provide new example files that work with oem2orm
 
-### Changed
-
+______________________________________________________________________
 ## [0.2.5] - 2020-08-06
 
 ### Changed
 - fix installation error caused by jmespath package dependency
 
+______________________________________________________________________
 ## [0.2.4] - 2020-07-20
 
 ### Added
@@ -85,20 +101,20 @@ ______________________________________________________________________
 ### Changed
 - change functions names
 
-
+______________________________________________________________________
 ## [0.2.3] - 2020-06-02
 
 ### Added
 - provide a minimal working example as jupyter notebook tutorial
 - New OEP-API related functions: Prepare the oemetadata string to send to api 
-    Simple User Input function to set the OEP-API-Token
+- Simple User Input function to set the OEP-API-Token
 
 ### Changed
 - Update README
 - include OEP public schema (whitelist) check
 - Spatial types from Geoalchemy2 do not set a spatial_index anymore
 
-
+______________________________________________________________________
 ## [0.2.2] - 2020-06-02
 
 ### Added
@@ -109,7 +125,7 @@ ______________________________________________________________________
 - extended description in changelog
 - Fix logging 
 
-
+______________________________________________________________________
 ## [0.2.0] - 2020-05-27
 
 ### Added
@@ -118,7 +134,7 @@ ______________________________________________________________________
 - new function: tables are collected and ordered by fk (increase usability)
 
 ### Changed
-- added docstrings 
+- added docstrings
 
 ### Removed
 - the user is no longer required to use a for loop in the main function to collect tables
