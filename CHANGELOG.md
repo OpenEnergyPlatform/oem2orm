@@ -29,20 +29,21 @@ Template:
 ## [Unreleased] - 20XX-MM-DD
 
 ### Added
+
 ### Changed
-- Metadata compilance checks now inculue optinal jsonschema validation for metadata (PR#32)
-- MetadataError is thrown if uploading metadata to OEP fails
 
 ### Removed
 
 ______________________________________________________________________
-## [0.3.2] - 2022-11-17
+## [0.3.2] - 2022-11-29
 
 ### Added
 - token can be passed as parameter (to support usage in APIs)
 
 ### Changed
 - Error is raised if schema does not exist
+- Metadata compilance checks now inculue optinal jsonschema validation for metadata (PR#32)
+- MetadataError is thrown if uploading metadata to OEP fails
 
 ______________________________________________________________________
 ## [0.3.1] - 2022-10-24
