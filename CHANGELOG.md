@@ -30,6 +30,7 @@ Template:
 
 ### Added
 ### Changed
+- Metadata compilance checks now inculue optinal jsonschema validation for metadata (PR#32)
 - MetadataError is thrown if uploading metadata to OEP fails
 
 ### Removed
