@@ -408,8 +408,8 @@ def moveTableToSchema(engine, destination_schema):
 
 
 # TODO: rename or remove this function - functionality moved to oep_complicance module, keep to avoide 3. party implementation errors
-def omi_validateMd(data: dict):
-    run_metadata_checks(oemetadata=data)
+def omi_validateMd(data: dict, jsonschema_validation=False):
+    run_metadata_checks(oemetadata=data, check_jsonschema=jsonschema_validation)
 
 
 def getTableSchemaNameFromOEM(metadata):
