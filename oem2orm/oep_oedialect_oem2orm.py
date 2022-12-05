@@ -43,7 +43,8 @@ def setup_logger():
     Easy logging setup depending on user input. Provides a logger for INFO level logging.
     :return: logging.INFO or none
     """
-    logger_level = input("Display logging information[Yes] or [No]:")
+    # logger_level = input("Display logging information[Yes] or [No]:")
+    logger_level = "yes"
     if re.fullmatch("[Yy]es", logger_level):
         print("logging activated")
         return logging.basicConfig(
@@ -381,11 +382,19 @@ def api_updateMdOnTable(metadata, token=None):
         logging.info(f"METADATA SUCCESSFULLY UPDATED: {table}")
         logging.info(f"Link to updated metadata on OEP: {api_action.dest_url}")
     else:
-        error_msg = resp.json()
-        logging.info(error_msg)
-        logging.info("HTTP status code: ")
-        logging.info(resp.status_code)
-        raise MetadataError(f"Uploading of metadata failed. Response from OEP: {error_msg}")
+        oep_err_msg_header = re.search("<h3>(.*)</h3>", resp.text).group(1)
+        err_message = (
+            f"Uploading of metadata failed. HTTPS response from OEP: {resp.status_code}, Message: {oep_err_msg_header}, URL: {resp.url}"
+            ""
+        )
+        if not resp.text.startswith("{"):
+            raise MetadataError(
+                f"The response text doesn't seem to be a json: {resp.text[:40]}..... \n\n Please check "
+                f"that the table is already created on the OEP! \n {err_message}"
+            )
+        else:
+            # in case a json is returned and there is a json error
+            raise MetadataError(err_message, resp.json())
 
 
 def api_downloadMd(schema, table, token=None):
