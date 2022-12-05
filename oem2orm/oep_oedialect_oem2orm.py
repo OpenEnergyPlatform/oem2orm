@@ -107,6 +107,7 @@ def create_tables(db: DB, tables: List[sa.Table]):
     :return: none
     """
     for table in tables:
+        logging.info(f"Working on table: {table}")
         if not db.engine.dialect.has_schema(db.engine, table.schema):
             error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
             logging.info(error_msg)
@@ -314,7 +315,7 @@ def collect_tables_from_oem(db: DB, oem_folder_path):
 
 
 def load_json(filepath):
-    logging.info("reading %s" % filepath)
+    logging.info("Reading metadata: %s" % filepath)
     with open(filepath, "rb") as f:
         return json.load(f)
 
@@ -373,12 +374,12 @@ def api_updateMdOnTable(metadata, token=None):
     schema = getTableSchemaNameFromOEM(metadata)[0]
     table = getTableSchemaNameFromOEM(metadata)[1]
 
-    logging.info("UPDATE METADATA")
+    logging.info(f"Update metadata: {table}")
     api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
     if resp.status_code == 200:
-        logging.info("   ok.")
-        logging.info(api_action.dest_url)
+        logging.info(f"METADATA SUCCESSFULLY UPDATED: {table}")
+        logging.info(f"Link to updated metadata on OEP: {api_action.dest_url}")
     else:
         error_msg = resp.json()
         logging.info(error_msg)
