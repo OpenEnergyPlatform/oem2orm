@@ -38,15 +38,14 @@ class MetadataError(Exception):
     pass
 
 
-def setup_logger():
+def setup_logger(logger_level: str = "Yes"):
     """
     Easy logging setup depending on user input. Provides a logger for INFO level logging.
     :return: logging.INFO or none
     """
-    # logger_level = input("Display logging information[Yes] or [No]:")
-    logger_level = "yes"
+
     if re.fullmatch("[Yy]es", logger_level):
-        print("logging activated")
+        print("Logging activated")
         return logging.basicConfig(
             format="%(levelname)s:%(message)s", level=logging.INFO
         )
