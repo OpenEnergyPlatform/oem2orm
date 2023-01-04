@@ -109,7 +109,8 @@ def create_tables(db: DB, tables: List[sa.Table]):
     for table in tables:
         logging.info(f"Working on table: {table}")
         if not db.engine.dialect.has_schema(db.engine, table.schema):
-            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
+            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing ' \
+                        f'schema from the `name` column from: https://openenergy-platform.org/dataedit/schemas'
             logging.info(error_msg)
             raise DatabaseError(error_msg)
         else:
@@ -269,7 +270,7 @@ def check_oep_api_schema_whitelist(oem_schema):
         return True
     else:
         logging.info(
-            "The OEP-API does not allow to write un-reviewed data to another schema then model_draft or sandbox"
+            "The OEP-API does not allow to write un-reviewed data to another schema then 'model_draft' or 'sandbox'"
         )
         return False
 
