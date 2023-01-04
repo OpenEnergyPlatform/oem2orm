@@ -31,7 +31,7 @@ Template:
 ### Added
 
 ### Changed
-
+- Improve logging and error messages (table creation, data upload, metadata registration)[#38]
 ### Removed
 
 ______________________________________________________________________
