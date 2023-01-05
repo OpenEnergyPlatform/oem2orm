@@ -38,14 +38,14 @@ class MetadataError(Exception):
     pass
 
 
-def setup_logger():
+def setup_logger(logger_level: str = "Yes"):
     """
     Easy logging setup depending on user input. Provides a logger for INFO level logging.
     :return: logging.INFO or none
     """
-    logger_level = input("Display logging information[Yes] or [No]:")
+
     if re.fullmatch("[Yy]es", logger_level):
-        print("logging activated")
+        print("Logging activated")
         return logging.basicConfig(
             format="%(levelname)s:%(message)s", level=logging.INFO
         )
@@ -107,8 +107,10 @@ def create_tables(db: DB, tables: List[sa.Table]):
     :return: none
     """
     for table in tables:
+        logging.info(f"Working on table: {table}")
         if not db.engine.dialect.has_schema(db.engine, table.schema):
-            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing schema'
+            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing ' \
+                        f'schema from the `name` column from: https://openenergy-platform.org/dataedit/schemas'
             logging.info(error_msg)
             raise DatabaseError(error_msg)
         else:
@@ -268,7 +270,7 @@ def check_oep_api_schema_whitelist(oem_schema):
         return True
     else:
         logging.info(
-            "The OEP-API does not allow to write un-reviewed data to another schema then model_draft or sandbox"
+            "The OEP-API does not allow to write un-reviewed data to another schema then 'model_draft' or 'sandbox'"
         )
         return False
 
@@ -314,7 +316,7 @@ def collect_tables_from_oem(db: DB, oem_folder_path):
 
 
 def load_json(filepath):
-    logging.info("reading %s" % filepath)
+    logging.info("Reading metadata: %s" % filepath)
     with open(filepath, "rb") as f:
         return json.load(f)
 
@@ -373,18 +375,26 @@ def api_updateMdOnTable(metadata, token=None):
     schema = getTableSchemaNameFromOEM(metadata)[0]
     table = getTableSchemaNameFromOEM(metadata)[1]
 
-    logging.info("UPDATE METADATA")
+    logging.info(f"Update metadata on table: {table}")
     api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
     if resp.status_code == 200:
-        logging.info("   ok.")
-        logging.info(api_action.dest_url)
+        logging.info(f"METADATA SUCCESSFULLY UPDATED: {table}")
+        logging.info(f"Link to updated metadata on OEP: {api_action.dest_url}")
     else:
-        error_msg = resp.json()
-        logging.info(error_msg)
-        logging.info("HTTP status code: ")
-        logging.info(resp.status_code)
-        raise MetadataError(f"Uploading of metadata failed. Response from OEP: {error_msg}")
+        oep_err_msg_header = re.search("<h3>(.*)</h3>", resp.text).group(1)
+        err_message = (
+            f"Uploading of metadata failed. HTTPS response from OEP: {resp.status_code}, Message: {oep_err_msg_header}, URL: {resp.url}"
+            ""
+        )
+        if not resp.text.startswith("{"):
+            raise MetadataError(
+                f"The response text doesn't seem to be a json: {resp.text[:40]}..... \n\n Please check "
+                f"that the table is already created on the OEP! \n {err_message}"
+            )
+        else:
+            # in case a json is returned and there is a json error
+            raise MetadataError(err_message, resp.json())
 
 
 def api_downloadMd(schema, table, token=None):
