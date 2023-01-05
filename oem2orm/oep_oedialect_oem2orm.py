@@ -375,7 +375,7 @@ def api_updateMdOnTable(metadata, token=None):
     schema = getTableSchemaNameFromOEM(metadata)[0]
     table = getTableSchemaNameFromOEM(metadata)[1]
 
-    logging.info(f"Update metadata: {table}")
+    logging.info(f"Update metadata on table: {table}")
     api_action = setupApiAction(schema, table, token)
     resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
     if resp.status_code == 200:
