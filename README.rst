@@ -152,8 +152,8 @@ Database Support
     :target: LICENSE.txt
     :alt: License
 
-.. |badge_documentation| image:: https://img.shields.io/github/actions/workflow/status/OpenEnergyPlatform/oem2orm/gh-pages.yml?branch=production
-    :target: https://rl-institut.github.io/oem2orm/
+.. |badge_documentation| image::
+    :target:
     :alt: Documentation
 
 .. |badge_contributing| image:: https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat
