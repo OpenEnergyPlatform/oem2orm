@@ -32,6 +32,8 @@ Template:
 
 ### Changed
 - Improve logging and error messages (table creation, data upload, metadata registration)[#38]
+- Fix error if field type is None
+
 ### Removed
 
 ______________________________________________________________________
