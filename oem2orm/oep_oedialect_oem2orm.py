@@ -205,7 +205,7 @@ def create_tables_from_metadata_file(
             # Get column type:
             try:
                 column_type = TYPES[field["type"]]
-            except KeyError:
+            except (KeyError, ValueError):
                 raise MetadataError(
                     "Unknown column type", field, field["type"], metadata_file
                 )
