@@ -119,7 +119,7 @@ def create_tables(db: DB, tables: List[sa.Table]):
                     table.create(checkfirst=True)
                     logging.info(f"Created table {table.name}")
                 except oedialect.engine.ConnectionException as ce:
-                    error_msg = f'Error when uploading table "{table.name}".'
+                    error_msg = f'Error when uploading table "{table.name}". Reason: {ce}.'
                     logging.error(error_msg)
                     raise DatabaseError(error_msg) from ce
                 except sa.exc.ProgrammingError as pe:
