@@ -225,7 +225,7 @@ def create_tables_from_metadata_file(
                 column = sa.Column(
                     field["name"],
                     column_type,
-                    primary_key=field["name"] in primary_keys,
+                    # primary_key=field["name"] in primary_keys,  # FIXME: Should be activated, see https://github.com/OpenEnergyPlatform/oedialect/issues/43
                     comment=field["description"],
                 )
             columns.append(column)
