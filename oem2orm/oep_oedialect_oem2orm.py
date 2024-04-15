@@ -19,6 +19,7 @@ import oedialect
 
 from oem2orm.postgresql_types import TYPES
 from oem2orm.oep_compliance import run_metadata_checks
+from oem2orm.settings import OEP_URL, OEP_API_URL
 
 # prepare connection string to connect via oep API
 CONNECTION_STRING = "{engine}://{user}:{token}@{host}"
@@ -53,7 +54,7 @@ def setup_logger(logger_level: str = "Yes"):
         pass
 
 
-def setup_db_connection(engine="postgresql+oedialect", host="openenergy-platform.org"):
+def setup_db_connection(engine="postgresql+oedialect", host=OEP_URL):
     """
     Create SQLAlchemy connection to Database API with Username and Token.
     Default is the OEP RESTful-API.
@@ -81,9 +82,8 @@ def setup_db_connection(engine="postgresql+oedialect", host="openenergy-platform
 
 def setupApiAction(schema, table, token=None):
     API_ACTION = namedtuple("API_Action", ["dest_url", "headers"])
-    OEP_URL = "https://openenergy-platform.org"
 
-    url = OEP_URL + "/api/v0/schema/{schema}/tables/{table}/meta/".format(
+    url = OEP_API_URL + "schema/{schema}/tables/{table}/meta/".format(
         schema=schema, table=table
     )
 
@@ -110,7 +110,7 @@ def create_tables(db: DB, tables: List[sa.Table]):
         logging.info(f"Working on table: {table}")
         if not db.engine.dialect.has_schema(db.engine, table.schema):
             error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing ' \
-                        f'schema from the `name` column from: https://openenergy-platform.org/dataedit/schemas'
+                        f'schema from the `name` column from: {OEP_URL}/dataedit/schemas'
             logging.info(error_msg)
             raise DatabaseError(error_msg)
         else:
