@@ -18,7 +18,7 @@ see [Pipx-Documentation](https://pypa.github.io/pipx/) for further information.
 
 ## Usage:
 
-This tool is part of the open-energy-metadata (OEM) integration into the [OEP](https://openenergy-platform.org/).
+This tool is part of the open-energy-metadata (OEM) integration into the [OEP](https://openenergyplatform.org/).
 To use this tool with the OEP API you need to be signed up to the OEP since
 you need to provide an API-Token. 
 
