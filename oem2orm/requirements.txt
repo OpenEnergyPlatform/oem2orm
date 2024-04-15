@@ -2,7 +2,7 @@ sqlalchemy
 psycopg2-binary
 jmespath
 GeoAlchemy2
-oedialect
+oedialect==0.1.1
 geopandas
 pandas
 omi

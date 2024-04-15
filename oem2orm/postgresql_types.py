@@ -40,6 +40,8 @@ class DatabaseTypes:
     }
 
     def __getitem__(self, item):
+        if item is None:
+            raise ValueError("Field type is 'None'.")
         if item.split(" ")[-1] == "array":
             db_type = self.types[item[:-6]]
             return psql.ARRAY(db_type)
