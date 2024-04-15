@@ -29,10 +29,12 @@ Template:
 ## [Unreleased] - 20XX-MM-DD
 
 ### Added
+- New settings module [#44](https://github.com/OpenEnergyPlatform/oem2orm/pull/44)
 
 ### Changed
 - Improve logging and error messages (table creation, data upload, metadata registration)[#38]
 - Fix error if field type is None
+- Update oep host url [#44](https://github.com/OpenEnergyPlatform/oem2orm/pull/44)
 
 ### Removed
 
