@@ -1,8 +1,8 @@
-# OEM to ORM
+# oem 2 orm
 
-Create database tables (and schema) from oemetadata json file(s)
+Create database tables (and schema) from oemetadata json file(s). This tool is part of the open-energy-metadata (OEM) integration into the [OEP](https://openenergyplatform.org/).
 
-## Installation:
+## Installation
 
 You can install pacakge using standard python installation:
 `
@@ -15,94 +15,78 @@ pipx install oem2orm
 `
 see [Pipx-Documentation](https://pypa.github.io/pipx/) for further information.
 
+## Usage
 
-## Usage:
+Read the Restrictions section and have a look at our [tutorial](./tutorial/USAGE.md) section to get more information about the usage of oem2orm either as code module or CLI tool. The tutorials also provide information how to validate your oemetadata files.
 
-This tool is part of the open-energy-metadata (OEM) integration into the [OEP](https://openenergyplatform.org/).
+### Restrictions
+
 To use this tool with the OEP API you need to be signed up to the OEP since
-you need to provide an API-Token. 
+you need to provide an API-Token.
 
-If you want to upload OEM that was officially reviewed you must clone the
-OEP data-preprocessing repository on [GitHub](https://github.com/OpenEnergyPlatform/data-preprocessing).
-The data-review folder contains all of the successfully reviewed OEM files.
-
-For security reasons, tables can only be created in existing 
+For security reasons, tables can only be created in existing
 schemas and just in the schemas "model_draft" and "sandbox".
 
-Keep in mind the current state is not fully tested. The code is
-still quit error prone f.e. the postgres types (column datatype) are not fully 
+Keep in mind that f.e. the postgres types (column datatype) are not fully
 supported by the [oedialct](https://pypi.org/project/oedialect/) - work in progress.
 
-### Terminal/CLI-Application
-Step-by-Step: 
-0. pip and python have to be installed and setup on your machine
-1. Create env from requirements.txt, and activate
-2. Put the metadata file in the folder metadata or put your own folder in this 
-    directory
-3. execute the following in a terminal:
-```
-pipx install oem2orm
-oem2orm
-Enter metadata folder name:
-...
-```
-4. Provide credentials and folder name in prompt
-5. The table will be created 
-
-### Import as Module
-
-You can simply import this module in your Python script.py like this:
-
-```python
-from oem2orm import oep_oedialect_oem2orm as oem2orm
-```
-
-Now just call the functions provided in oem2orm like this:
-
-Recommended execution order:
-- Setup the logger
-```python
-oem2orm.setup_logger()
-```
-
-- Setup the Database API connection as Namedtuple storing the SQLAlchemy engine and metadata:
-```python
-db = oem2orm.setup_db_connection()
-```
-
-- Provide the oem files in a folder (in the current directory).
-- Pass the folder name to the function:
-```python
-metadata_folder = oem2orm.select_oem_dir(oem_folder_name="folder_name")
-```
-
-- Setup a SQLAlchemy ORM including all data-model in the provided oem files:
-```python
-orm = oem2orm.collect_ordered_tables_from_oem(db, metadata_folder)
-```
-
-- Create the tables on the Database:
-```python
-oem2orm.create_tables(db, orm)
-```
-
-- Delete all tables that have been created (all tables available in sa.metadata)
-```python
-oem2orm.delete_tables(db, orm)
-```
-
-## Docs:
+## Docs
 
 ### Database connection
+
 We use a global namedtuple called "DB" To store the sqlalchemy connection objects engine and metadata.
 The namedtuple is available wen import oem2orm in a script. To establish the namedtuple use the function
-setup_db_connection(). Now you can use DB.engine or DB.metadata.
+setup_db_connection(). Now you can use DB.engine or DB.metadata. In the background the connection is established
+using oedialect and the http API of the oeplatform website.
 
 ### oem2orm generator
 
-#### Supported datatypes
+The table objects (ORM) are generated on the fly from an oemetadata.json file. [oemetadata](https://github.com/OpenEnergyPlatform/oemetadata) is a metadata specification of the Open Energy Family. It includes about 50 fields that can be used to provide metadata for tabular data resources.
+A subset of these fields are grouped in the key "resources" ([see out example](https://github.com/OpenEnergyPlatform/oemetadata/blob/develop/metadata/v160/example.json#L237-L388)) in the metadata. These fields describe the schema of
+the data table (like table name, columns,  data types & table relations).
+
+The method oem2orm provides to create data tables on the OEP. It is especially useful if you attempt to automate the table creation and already use python or already have a oemetadata file available. The alternatives are:
+
+1. [manually describing](https://openenergyplatform.github.io/academy/tutorials/01_api/02_api_upload/#create-table) the table object in JSON and then use the oep HTTP API directly to create a table.  
+2. Use the [User Interface of the oeplatform website](https://openenergyplatform.org/dataedit/wizard/) to create a table and upload data.
+
+### Oemetadata format
+
+[Specification for the oemetadata](https://github.com/OpenEnergyPlatform/oemetadata)
+
+#### Oemetadata validation
+
+The oemetadata specification is integrated into the open energy platform using a tool called [omi (metadata integration)](https://github.com/OpenEnergyPlatform/omi). OMI provides functionality to run validation checks on the metadata up to the oemetadata version 1.6.0. oem2orm also provides a minimal oep compliance check that mocks the checks that are run on the oep website once the metadata is uploaded to a table.
+
+#### Supported column data types
+
+Currently oem2orm supports
+
+        "bigint"
+        "int":
+        "integer"
+        "varchar"
+        "json"
+        "text"
+        "timestamp"
+        "interval"
+        "string"
+        "float"
+        "boolean"
+        "date"
+        "hstore"
+        "decimal"
+        "numeric"
+        "double precision"
 
 #### Spatial Types
-We create columns with spatial datatypes using Geoalchemy2. 
+
+    "geometry point": Geometry("POINT",  spatial_index=False),
+    "geom": Geometry("GEOMETRY",  spatial_index=False),
+    "geometry": Geometry("GEOMETRY",  spatial_index=False),
+
+We create columns with spatial datatypes using Geoalchemy2.
 
 ## Database support
+
+We only tested this tool with PostgreSQL & sqlalchemy version 1.3

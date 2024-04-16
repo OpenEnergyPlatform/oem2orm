@@ -42,6 +42,23 @@ Template:
 
 ______________________________________________________________________
 
+## [v0.4.0] - 2024-04-16
+
+### Added
+
+- Metadata upload in case of single table in OEM [#21](https://github.com/OpenEnergyPlatform/oem2orm/pull/21)
+
+### Changed
+
+- Reworked repo file structure & extend documentation [#49](https://github.com/OpenEnergyPlatform/oem2orm/pull/49)
+
+### Fixed
+
+- oedialect version to v0.1.1  [#47](https://github.com/OpenEnergyPlatform/oem2orm/pull/47)
+- sqlalchemy version to v1.3.16  [#47](https://github.com/OpenEnergyPlatform/oem2orm/pull/47)
+
+______________________________________________________________________
+
 ## [v0.3.3] - 2024-04-15
 
 ### Added
