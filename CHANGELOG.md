@@ -36,7 +36,7 @@ Template:
 
 ### Changed
 
--
+- Reworked repo file structure & extend documentation [#](https://github.com/OpenEnergyPlatform/oem2orm/pull/)
 
 ### Removed
 
