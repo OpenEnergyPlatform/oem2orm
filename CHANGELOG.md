@@ -32,6 +32,8 @@ Template:
 
 ### Added
 
+- Metadata upload in case of single table in OEM
+
 -
 
 ### Changed

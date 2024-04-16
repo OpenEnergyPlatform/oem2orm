@@ -17,6 +17,10 @@ def create_tables(metadata_folder):
     folder = pathlib.Path.cwd() / metadata_folder
     tables = oep_oedialect_oem2orm.collect_tables_from_oem(db, folder)
     oep_oedialect_oem2orm.create_tables(db, tables)
+    if len(tables) == 1:
+        # Upload metadata for single table
+        metadata = oep_oedialect_oem2orm.mdToDict(metadata_folder)
+        oep_oedialect_oem2orm.api_updateMdOnTable(metadata)
 
 
 @cli.command()
