@@ -1,4 +1,3 @@
-
 import click
 import pathlib
 
@@ -11,7 +10,7 @@ def cli():
 
 
 @cli.command()
-@click.argument('metadata-folder', type=click.Path(exists=True))
+@click.argument("metadata-folder", type=click.Path(exists=True))
 def create_tables(metadata_folder):
     db = oep_oedialect_oem2orm.setup_db_connection()
     folder = pathlib.Path.cwd() / metadata_folder
@@ -24,7 +23,7 @@ def create_tables(metadata_folder):
 
 
 @cli.command()
-@click.argument('metadata-folder', type=click.Path(exists=True))
+@click.argument("metadata-folder", type=click.Path(exists=True))
 def delete_tables(metadata_folder):
     db = oep_oedialect_oem2orm.setup_db_connection()
     folder = pathlib.Path.cwd() / metadata_folder
@@ -32,5 +31,5 @@ def delete_tables(metadata_folder):
     oep_oedialect_oem2orm.delete_tables(db, tables)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
