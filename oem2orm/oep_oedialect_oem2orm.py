@@ -109,8 +109,10 @@ def create_tables(db: DB, tables: List[sa.Table]):
     for table in tables:
         logging.info(f"Working on table: {table}")
         if not db.engine.dialect.has_schema(db.engine, table.schema):
-            error_msg = f'The provided database schema: "{table.schema}" does not exist. Please use an existing ' \
-                        f'schema from the `name` column from: {OEP_URL}/dataedit/schemas'
+            error_msg = (
+                f'The provided database schema: "{table.schema}" does not exist. Please use an existing '
+                f"schema from the `name` column from: {OEP_URL}/dataedit/schemas"
+            )
             logging.info(error_msg)
             raise DatabaseError(error_msg)
         else:
@@ -119,7 +121,9 @@ def create_tables(db: DB, tables: List[sa.Table]):
                     table.create(checkfirst=True)
                     logging.info(f"Created table {table.name}")
                 except oedialect.engine.ConnectionException as ce:
-                    error_msg = f'Error when uploading table "{table.name}". Reason: {ce}.'
+                    error_msg = (
+                        f'Error when uploading table "{table.name}". Reason: {ce}.'
+                    )
                     logging.error(error_msg)
                     raise DatabaseError(error_msg) from ce
                 except sa.exc.ProgrammingError as pe:
@@ -225,7 +229,8 @@ def create_tables_from_metadata_file(
                 column = sa.Column(
                     field["name"],
                     column_type,
-                    # primary_key=field["name"] in primary_keys,  # FIXME: Should be activated, see https://github.com/OpenEnergyPlatform/oedialect/issues/43
+                    primary_key=field["name"]
+                    in primary_keys,  # TODO: Should be fixed, see https://github.com/OpenEnergyPlatform/oedialect/issues/43
                     comment=field["description"],
                 )
             columns.append(column)
