@@ -44,6 +44,14 @@ ______________________________________________________________________
 
 ## [v0.3.3] - 2024-04-15
 
+### Fixed
+- oedialect version to v0.1.1
+- sqlalchemy version to v1.3.16
+
+______________________________________________________________________
+
+## [v0.3.3] - 2024-04-15
+
 ### Added
 
 - New settings module [#44](https://github.com/OpenEnergyPlatform/oem2orm/pull/44)
