@@ -1,7 +1,7 @@
 __copyright__ = "Reiner Lemoine Institut"
-__license__   = "GNU Affero General Public License Version 3 (AGPL-3.0)"
-__url__       = "https://github.com/openego/data_processing/blob/master/LICENSE"
-__author__    = "henhuy"
+__license__ = "GNU Affero General Public License Version 3 (AGPL-3.0)"
+__url__ = "https://github.com/openego/data_processing/blob/master/LICENSE"
+__author__ = "henhuy"
 
 import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as psql
@@ -27,16 +27,13 @@ class DatabaseTypes:
         "hstore": HSTORE,
         "decimal": sa.DECIMAL,
         "numeric": sa.NUMERIC,
-
         # Spatial types
-        "geometry point": Geometry("POINT",  spatial_index=False),
-        "geom": Geometry("GEOMETRY",  spatial_index=False),
-        "geometry": Geometry("GEOMETRY",  spatial_index=False),
-
+        "geometry point": Geometry("POINT", spatial_index=False),
+        "geom": Geometry("GEOMETRY", spatial_index=False),
+        "geometry": Geometry("GEOMETRY", spatial_index=False),
         # not support with oedialect
-        "double precision": psql.DOUBLE_PRECISION
+        "double precision": psql.DOUBLE_PRECISION,
         # "double precision array": sa.ARRAY("DOUBLE_PRECISION"),
-
     }
 
     def __getitem__(self, item):

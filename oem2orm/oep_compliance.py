@@ -6,6 +6,7 @@ requirments from other oefamily software modules like omi.
 
 
 """
+
 import logging
 import pathlib
 import json
@@ -23,6 +24,7 @@ METADATA_PARSERS = [OEP_V_1_5_Dialect(), OEP_V_1_4_Dialect()]
 METADATA_COMPILERS = [OEP_V_1_5_Dialect(), OEP_V_1_4_Dialect(), JSONCompiler()]
 
 logger = logging.getLogger()
+
 
 def read_input_json(file_path: pathlib.Path = "tests/data/metadata_v15.json"):
     with open(file_path, "r", encoding="utf-8") as f:
@@ -123,7 +125,9 @@ def check_oemetadata_is_oep_compatible(metadata):
 # -------------------------------------------
 
 
-def run_metadata_checks(oemetadata: dict = None, oemetadata_path: str = None,  check_jsonschema: bool = False):
+def run_metadata_checks(
+    oemetadata: dict = None, oemetadata_path: str = None, check_jsonschema: bool = False
+):
     """
     Runs metadata checks includes:
         - basic oep compliant check - tested by using omi's parsing and compiling
@@ -165,10 +169,12 @@ def run_metadata_checks(oemetadata: dict = None, oemetadata_path: str = None,  c
         schema = parser_validation.get_schema_by_metadata_version(metadata=metadata)
         result = parser_validation.is_valid(inp=metadata, schema=schema)
         if result is False:
-            result = result, parser_validation.validate(metadata=metadata, save_report=True)
-        
+            result = result, parser_validation.validate(
+                metadata=metadata, save_report=True
+            )
+
         return result
-            
+
 
 if __name__ == "__main__":
     correct_v15_test_data = "tests/data/metadata_v15.json"
@@ -177,7 +183,9 @@ if __name__ == "__main__":
 
     meta = read_input_json(file_path=correct_v15_test_data)
     print("Check v15 metadata from file!")
-    result = run_metadata_checks(oemetadata_path=correct_v15_test_data, check_jsonschema=True)
+    result = run_metadata_checks(
+        oemetadata_path=correct_v15_test_data, check_jsonschema=True
+    )
     print("Check v15 metadata from object!")
     run_metadata_checks(oemetadata=meta)
 
