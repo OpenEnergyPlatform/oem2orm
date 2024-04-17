@@ -36,7 +36,21 @@ Template:
 
 ### Changed
 
-- Fix OEP URL in settings.py to latest url schema: https://openenergyplatform.org/ [#52](https://github.com/OpenEnergyPlatform/oem2orm/pull/52)
+-
+
+### Removed
+
+______________________________________________________________________
+
+## [v0.4.1] - 2024-04-17
+
+### Added
+
+-
+
+### Changed
+
+- Fix OEP URL in settings.py to latest url schema: <https://openenergyplatform.org/> [#52](https://github.com/OpenEnergyPlatform/oem2orm/pull/52)
 
 ### Removed
 
