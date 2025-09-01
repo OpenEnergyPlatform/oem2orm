@@ -168,99 +168,128 @@ def order_tables_by_foreign_keys(tables: List[sa.Table]):
 def create_tables_from_metadata_file(
     db: DB, metadata_file: Union[str, dict]
 ) -> List[sa.Table]:
-    """
-    Takes a metadata file in oem format (tested with oem v1.4.0) and
-    generates a sqlalchemy ORM Table representation. The oem can contain
-    multiple Tables, this function will return one or multiple sa table objects.
 
-    :param db: API
-    :param metadata_file: json/json file (oem 1.4.0)
-    :return: collection of sqlalchemy table objects
-    """
+    # --- load metadata (path or dict) ---
     if isinstance(metadata_file, str):
         with open(metadata_file, "r") as metadata_json:
             metadata = json.loads(metadata_json.read())
     else:
         metadata = metadata_file
-    tables_raw = jmespath.search("resources", metadata)
 
-    tables = []
-    for table in tables_raw:
-        # Get (schema) and table name:
-        schema_table_str = table["name"].split(".")
-        if len(schema_table_str) == 1:
-            schema = "model_draft"
-            table_name = schema_table_str[0]
-        elif len(schema_table_str) == 2:
-            schema, table_name = schema_table_str
-        else:
-            raise MetadataError("Cannot read table name (and schema)", table["name"])
+    tables_raw = jmespath.search("resources", metadata) or []
+    tables: List[sa.Table] = []
 
-        # Get primary keys:
-        primary_keys = jmespath.search("schema.primaryKey[*]", table)
-        # Get foreign_keys:
-        foreign_keys = {
-            fk["fields"][0]: fk["reference"]
-            for fk in jmespath.search("schema.foreignKeys", table)
-        }
-        # Create columns:
-        columns = []
-        for field in jmespath.search("schema.fields[*]", table):
-            # Get column type:
+    # keep for later if you push updated metadata elsewhere
+    normalized_resources: list[dict] = []
+
+    for res in tables_raw:
+        # normalize table + columns + PK/FK names in place
+        norm_table_name, _ = normalize_resource_inplace(res)
+        normalized_resources.append(res)
+
+        if not norm_table_name:
+            raise MetadataError("Cannot read table name (and schema)", res.get("name"))
+
+        schema = "model_draft"  # OEP creation always in draft/sandbox
+
+        # ---- build FK map once (post-normalization) ----
+        foreign_keys: dict[str, dict] = {}
+        for fk in res.get("schema", {}).get("foreignKeys") or []:
+            local_fields = fk.get("fields")
+            if isinstance(local_fields, str):
+                local_fields = [local_fields]
+            reference = fk.get("reference") or {}
+            for lf in local_fields or []:
+                foreign_keys[lf] = reference
+
+        # ---- fields (already normalized by normalize_resource_inplace) ----
+        fields = jmespath.search("schema.fields[*]", res) or []
+        field_names = {f["name"] for f in fields}
+        has_id = "id" in field_names
+
+        columns: list[sa.Column] = []
+
+        # Ensure a single PK named 'id'
+        if not has_id:
+            columns.append(
+                sa.Column(
+                    "id",
+                    sa.Integer,
+                    primary_key=True,
+                    autoincrement=True,
+                    comment="Surrogate primary key",
+                )
+            )
+
+        # Helper to build schema-qualified FK target
+        def _fk_target(resource: str, ref_field_raw) -> str:
+            # preserve schema.table if provided
+            schema_part, table_part = ("model_draft", resource or "")
+            if resource and "." in resource:
+                schema_part, table_part = resource.split(".", 1)
+            # normalize each piece with your existing normalizers
+            norm_table = TABLE_NORMALIZER(table_part)
+            # default remote field to 'id', then normalize as column
+            if isinstance(ref_field_raw, list) and ref_field_raw:
+                ref_field = COLUMN_NORMALIZER(ref_field_raw[0])
+            else:
+                ref_field = COLUMN_NORMALIZER(ref_field_raw or "id")
+            # schema.table.column (or table.column if no schema)
+            return (
+                f"{schema_part}.{norm_table}.{ref_field}"
+                if schema_part
+                else f"{norm_table}.{ref_field}"
+            )
+
+        # Add remaining columns
+        for field in fields:
+            fname = field["name"]  # ≤ MAX_COLUMN_LEN, normalized
             try:
                 column_type = TYPES[field["type"]]
             except (KeyError, ValueError):
                 raise MetadataError(
-                    "Unknown column type", field, field["type"], metadata_file
+                    "Unknown column type", field, field.get("type"), metadata_file
                 )
 
-            if field["name"] in foreign_keys:
-                foreign_key = foreign_keys[field["name"]]
+            comment = field.get("description")
+            pk_flag = fname == "id"  # only 'id' may be PK
+
+            if fname in foreign_keys:
+                ref = foreign_keys[fname] or {}
+                target = _fk_target(ref.get("resource", ""), ref.get("fields"))
                 column = sa.Column(
-                    field["name"],
+                    fname,
                     column_type,
-                    sa.ForeignKey(
-                        f'{foreign_key["resource"]}.{foreign_key["fields"][0]}'
-                    ),
-                    primary_key=field["name"] in primary_keys,
-                    comment=field["description"],
+                    sa.ForeignKey(target),
+                    primary_key=pk_flag,
+                    comment=comment,
                 )
             else:
                 column = sa.Column(
-                    field["name"],
+                    fname,
                     column_type,
-                    primary_key=field["name"]
-                    in primary_keys,  # TODO: Should be fixed, see https://github.com/OpenEnergyPlatform/oedialect/issues/43
-                    comment=field["description"],
+                    primary_key=pk_flag,
+                    comment=comment,
                 )
+
             columns.append(column)
 
-        if check_oep_api_schema_whitelist(schema):
-            tables.append(
-                sa.Table(
-                    table_name,
-                    db.metadata,
-                    *columns,
-                    schema=schema,
-                    extend_existing=True,
-                )
-            )
-        else:
-            logging.info(
-                "The current schema:'" + schema + "' is changed to 'model_draft'"
-            )
+        # enforce allowed schema; create Table
+        if not check_oep_api_schema_whitelist(schema):
+            logging.info("The current schema:'%s' is changed to 'model_draft'", schema)
             schema = "model_draft"
-            tables.append(
-                sa.Table(
-                    table_name,
-                    db.metadata,
-                    *columns,
-                    schema=schema,
-                    extend_existing=True,
-                )
-            )
-    return tables
 
+        tables.append(
+            sa.Table(
+                norm_table_name,
+                db.metadata,
+                *columns,
+                schema=schema,
+                extend_existing=True,
+            )
+        )
+
+    return tables
 
 def check_oep_api_schema_whitelist(oem_schema):
     """
