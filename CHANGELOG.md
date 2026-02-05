@@ -2,8 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is inpired from [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and the versiong aim to respect [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format is inspired from [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+and the versioning aim to respect [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 Here is a template for new release sections
 
@@ -32,11 +32,13 @@ Template:
 
 ### Added
 
--
+- Normalization module that helps to generate oep compliant data model structure from oemetadata. [#57](https://github.com/OpenEnergyPlatform/oem2orm/pull/57)
+
+- New, robust settings module which does not interfere with 3rd party environment variables using the same variables as oem2orm. [#57](https://github.com/OpenEnergyPlatform/oem2orm/pull/57)
 
 ### Changed
 
--
+- Enhanced usage of logging. [#57](https://github.com/OpenEnergyPlatform/oem2orm/pull/57)
 
 ### Removed
 

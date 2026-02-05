@@ -4,13 +4,7 @@ This section gets you started with using the oem2orm tool.
 
 ## oemetadata compliance check
 
-It is mandatory for oem2orm that you provide a valid oemetadata as input. Otherwise the functionality can not be granted. To provide some tooling within oem2orm that helps you check your metadata JSON files you can use the module `oep_compliance.py`.
-
-Run the oemetadata check (currently only for oemetadata version up to 1.5.2):
-
-    from oem2orm.oep_compliance import run_metadata_checks
-    # assuming your oemetadata file is in a directory called "data" 
-    run_metadata_checks(oemetadata = None, oemetadata_path = "data/oemetadata.json", check_jsonschema = False)
+OMI provides the full validation functionality for the oemetadata. It is implemented in the OEP and will make sure your metadata is compliant with the oeplatform requirements.
 
 ## Terminal/CLI-Application
 
@@ -32,7 +26,17 @@ Enter metadata folder name:
 4. Provide credentials and folder name in prompt
 5. The table will be created
 
-## Import as Module
+## Common usage
+
+!!! Note
+
+    This approach works out smoother if you use a IDE like pycharm or VScode.
+
+The approach we use is based on 1. a "prepare phase" to provide the tool setup and datapackage artifacts. This includes OEP-API credentials, dataset using the frictionless datapackage style with oemetadata to describe the dataset and other optional developer settings. 2. is the "action phase" which involves setting up date artifacts so the tool can find it which includes setting the dataset name and some general metadata fields like dataset description. Furthermore installing and running the tool source must be 
+
+### The setup
+
+## Internal API for Module access
 
 You can simply import this module in your Python script.py like this:
 
