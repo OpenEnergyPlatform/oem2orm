@@ -5,26 +5,43 @@ __author__ = "henhuy, jh-RLI"
 
 import os
 from collections import namedtuple
-from typing import List, Union
+from typing import List, Union, Tuple
 import json
-import logging
+from urllib.parse import urljoin
+from oem2orm import logs
 import pathlib
 import jmespath
 import getpass
 import sqlalchemy as sa
 import re
 import requests
+from omi.base import get_metadata_specification
+from omi.validation import validate_metadata
 
 import oedialect
 
+from copy import deepcopy
+
+from oem2orm.normalizer import (
+    TABLE_NORMALIZER,
+    COLUMN_NORMALIZER,
+    normalize_resource_inplace,
+    strip_blank_fk_and_keys,
+    split_schema_table,
+)
 from oem2orm.postgresql_types import TYPES
-from oem2orm.oep_compliance import run_metadata_checks
-from oem2orm.settings import OEP_URL, OEP_API_URL
+from oem2orm.settings import get_oep_api_url, get_oep_host, get_oep_token, get_oep_user
+
+MAX_TABLE_LEN = 50
+MAX_COLUMN_LEN = 50
+DEFAULT_SCHEMA = "data"
 
 # prepare connection string to connect via oep API
 CONNECTION_STRING = "{engine}://{user}:{token}@{host}"
 #
 DB = namedtuple("Database", ["engine", "metadata"])
+
+logger = logs.setup_logging()
 
 
 class CredentialError(Exception):
@@ -41,60 +58,46 @@ class MetadataError(Exception):
 
 def setup_logger(logger_level: str = "Yes"):
     """
-    Easy logging setup depending on user input. Provides a logger for INFO level logging.
+    Easy logging setup depending on user input. Provides a logger for
+    INFO level logging.
+
     :return: logging.INFO or none
     """
 
     if re.fullmatch("[Yy]es", logger_level):
         print("Logging activated")
-        return logging.basicConfig(
-            format="%(levelname)s:%(message)s", level=logging.INFO
-        )
+        return logger
     elif re.fullmatch("[Nn]o", logger_level):
         pass
 
 
-def setup_db_connection(engine="postgresql+oedialect", host=OEP_URL):
-    """
-    Create SQLAlchemy connection to Database API with Username and Token.
-    Default is the OEP RESTful-API.
+def setup_db_connection(
+    engine="postgresql+oedialect", host=None, token=None, user=None
+):
+    user = user or get_oep_user() or input("Enter OEP-username:")
+    token = token or get_oep_token() or setUserToken()
+    host = host or get_oep_host()
 
-    :param engine: Database engine, default is postgresql
-    :param host: API provider
-    :return: DB(sa.engine, sa.metadata) namedtuple
-    """
+    # Don't print the token
+    safe_conn_str = f"{engine}://{user}:***@{host}"
+    print(f"Connecting to OEP API with connection string: {safe_conn_str}")
 
-    try:
-        user = os.environ["OEP_USER"]
-    except KeyError:
-        user = input("Enter OEP-username:")
-
-    token = setUserToken()
-
-    # Generate connection string:
-    conn_str = CONNECTION_STRING
-    conn_str = conn_str.format(engine=engine, user=user, token=token, host=host)
-
-    engine = sa.create_engine(conn_str)
-    metadata = sa.MetaData(bind=engine)
-    return DB(engine, metadata)
+    sa_engine = sa.create_engine(f"{engine}://{user}:{token}@{host}")
+    metadata = sa.MetaData(bind=sa_engine)
+    return DB(sa_engine, metadata)
 
 
 def setupApiAction(schema, table, token=None):
-    API_ACTION = namedtuple("API_Action", ["dest_url", "headers"])
-
-    url = OEP_API_URL + "schema/{schema}/tables/{table}/meta/".format(
-        schema=schema, table=table
-    )
-
-    token = token if token else setUserToken()
+    base = get_oep_api_url()
+    dest_url = urljoin(base, f"schema/{schema}/tables/{table}/meta/")
+    token = token or get_oep_token() or setUserToken()
     headers = {
-        "Authorization": "Token %s" % token,
+        "Authorization": f"Token {token}",
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-
-    return API_ACTION(url, headers)
+    API_ACTION = namedtuple("API_Action", ["dest_url", "headers"])
+    return API_ACTION(dest_url, headers)
 
 
 def create_tables(db: DB, tables: List[sa.Table]):
@@ -107,28 +110,29 @@ def create_tables(db: DB, tables: List[sa.Table]):
     :return: none
     """
     for table in tables:
-        logging.info(f"Working on table: {table}")
+        logger.info(f"Working on table: {table}")
+        logger.info(f"Using connection: {db.engine}")
         if not db.engine.dialect.has_schema(db.engine, table.schema):
             error_msg = (
                 f'The provided database schema: "{table.schema}" does not exist. Please use an existing '
-                f"schema from the `name` column from: {OEP_URL}/dataedit/schemas"
+                f"schema from the `name` column from: {get_oep_host}/dataedit/schemas"
             )
-            logging.info(error_msg)
+            logger.info(error_msg)
             raise DatabaseError(error_msg)
         else:
             if not db.engine.dialect.has_table(db.engine, table.name, table.schema):
                 try:
                     table.create(checkfirst=True)
-                    logging.info(f"Created table {table.name}")
+                    logger.info(f"Created table {table.name}")
                 except oedialect.engine.ConnectionException as ce:
                     error_msg = (
                         f'Error when uploading table "{table.name}". Reason: {ce}.'
                     )
-                    logging.error(error_msg)
+                    logger.error(error_msg)
                     raise DatabaseError(error_msg) from ce
                 except sa.exc.ProgrammingError as pe:
                     error_msg = f'Table "{table.name}" already exists.'
-                    logging.error(error_msg)
+                    logger.error(error_msg)
                     raise DatabaseError(error_msg) from pe
 
 
@@ -168,97 +172,197 @@ def order_tables_by_foreign_keys(tables: List[sa.Table]):
 def create_tables_from_metadata_file(
     db: DB, metadata_file: Union[str, dict]
 ) -> List[sa.Table]:
-    """
-    Takes a metadata file in oem format (tested with oem v1.4.0) and
-    generates a sqlalchemy ORM Table representation. The oem can contain
-    multiple Tables, this function will return one or multiple sa table objects.
-
-    :param db: API
-    :param metadata_file: json/json file (oem 1.4.0)
-    :return: collection of sqlalchemy table objects
-    """
+    # --- load metadata (path or dict) ---
     if isinstance(metadata_file, str):
         with open(metadata_file, "r") as metadata_json:
             metadata = json.loads(metadata_json.read())
     else:
         metadata = metadata_file
-    tables_raw = jmespath.search("resources", metadata)
 
-    tables = []
-    for table in tables_raw:
-        # Get (schema) and table name:
-        schema_table_str = table["name"].split(".")
-        if len(schema_table_str) == 1:
-            schema = "model_draft"
-            table_name = schema_table_str[0]
-        elif len(schema_table_str) == 2:
-            schema, table_name = schema_table_str
-        else:
-            raise MetadataError("Cannot read table name (and schema)", table["name"])
+    resources = jmespath.search("resources", metadata) or []
+    tables: List[sa.Table] = []
 
-        # Get primary keys:
-        primary_keys = jmespath.search("schema.primaryKey[*]", table)
-        # Get foreign_keys:
-        foreign_keys = {
-            fk["fields"][0]: fk["reference"]
-            for fk in jmespath.search("schema.foreignKeys", table)
-        }
-        # Create columns:
-        columns = []
-        for field in jmespath.search("schema.fields[*]", table):
-            # Get column type:
+    # Track UNIQUE needs for referenced tables in this batch
+    # Key: "schema.table" -> set of tuples of column names (supports composite)
+    unique_needed: dict[str, set[tuple[str, ...]]] = {}
+
+    # FK specs we will attach in pass 2
+    pending_fks: list[dict] = []
+
+    # ---- PASS 1: build all tables, add id-PK, collect uniques & FK specs (no FKs yet) ----
+    built: dict[str, sa.Table] = {}
+
+    for res in resources:
+        strip_blank_fk_and_keys(res)
+
+        # normalize table + columns + key names in place
+        norm_table_name, _ = normalize_resource_inplace(res)
+        if not norm_table_name:
+            raise MetadataError("Cannot read table name (and schema)", res.get("name"))
+
+        schema = DEFAULT_SCHEMA  # creation target schema (your existing constant)
+
+        # fields (already normalized)
+        fields = jmespath.search("schema.fields[*]", res) or []
+        field_names = {f["name"] for f in fields}
+        has_id = "id" in field_names
+
+        columns: list[sa.Column] = []
+
+        # Ensure a single PK named 'id'
+        if not has_id:
+            columns.append(
+                sa.Column(
+                    "id",
+                    sa.Integer,
+                    primary_key=True,
+                    autoincrement=True,
+                    comment="Surrogate primary key",
+                )
+            )
+
+        # Build columns WITHOUT column-level FKs for now
+        for field in fields:
+            fname = field["name"]
             try:
                 column_type = TYPES[field["type"]]
             except (KeyError, ValueError):
                 raise MetadataError(
-                    "Unknown column type", field, field["type"], metadata_file
+                    "Unknown column type", field, field.get("type"), metadata_file
                 )
+            comment = field.get("description")
+            pk_flag = fname == "id"  # only 'id' may be PK
+            columns.append(
+                sa.Column(fname, column_type, primary_key=pk_flag, comment=comment)
+            )
 
-            if field["name"] in foreign_keys:
-                foreign_key = foreign_keys[field["name"]]
-                column = sa.Column(
-                    field["name"],
-                    column_type,
-                    sa.ForeignKey(
-                        f'{foreign_key["resource"]}.{foreign_key["fields"][0]}'
-                    ),
-                    primary_key=field["name"] in primary_keys,
-                    comment=field["description"],
-                )
+        # Create the Table object
+        tbl = sa.Table(
+            norm_table_name,
+            db.metadata,
+            *columns,
+            schema=schema,
+            extend_existing=True,
+        )
+        tables.append(tbl)
+        built[f"{schema}.{norm_table_name}"] = tbl
+
+        # Honor the metadata’s intended primaryKey by adding UNIQUE (if not 'id')
+        intended_pk = (res.get("schema", {}) or {}).get("primaryKey")
+        if intended_pk:
+            if isinstance(intended_pk, str):
+                intended_cols = (intended_pk,)
             else:
-                column = sa.Column(
-                    field["name"],
-                    column_type,
-                    primary_key=field["name"]
-                    in primary_keys,  # TODO: Should be fixed, see https://github.com/OpenEnergyPlatform/oedialect/issues/43
-                    comment=field["description"],
-                )
-            columns.append(column)
+                intended_cols = tuple(intended_pk)
+            intended_cols = tuple(intended_cols)  # already normalized
+            if not (len(intended_cols) == 1 and intended_cols[0] == "id"):
+                uc_name = f"uq_{norm_table_name}_" + "_".join(intended_cols)
+                if not (
+                    len(intended_cols) == 1
+                    and getattr(tbl.c.get(intended_cols[0]), "unique", False)
+                ):
+                    tbl.append_constraint(
+                        sa.UniqueConstraint(*intended_cols, name=uc_name)
+                    )
 
-        if check_oep_api_schema_whitelist(schema):
-            tables.append(
-                sa.Table(
-                    table_name,
-                    db.metadata,
-                    *columns,
-                    schema=schema,
-                    extend_existing=True,
-                )
+        # Collect FK specs and record UNIQUE needs for any non-id target in this batch
+        for fk in res.get("schema", {}).get("foreignKeys") or []:
+            local_fields = fk.get("fields")
+            if isinstance(local_fields, str):
+                local_fields = [local_fields]
+            reference = fk.get("reference") or {}
+
+            # NOTE: preserve old behavior:
+            # - extract only table from reference.resource
+            # - FORCE the FK schema to the creation schema
+            _ref_schema_ignored, ref_table_raw = split_schema_table(
+                reference.get("resource", ""), default_schema=None
             )
-        else:
-            logging.info(
-                "The current schema:'" + schema + "' is changed to 'model_draft'"
+            ref_schema = schema  # force to current schema (matches old nested function)
+
+            ref_table_norm = TABLE_NORMALIZER(ref_table_raw)
+
+            ref_fields = reference.get("fields")
+            if isinstance(ref_fields, list) and ref_fields:
+                remote_cols = tuple(COLUMN_NORMALIZER(rf) for rf in ref_fields)
+            else:
+                remote_cols = (COLUMN_NORMALIZER(ref_fields or "id"),)
+
+            # remember FK spec for pass 2
+            pending_fks.append(
+                {
+                    "this_schema": schema,
+                    "this_table": norm_table_name,
+                    "local_cols": [COLUMN_NORMALIZER(c) for c in (local_fields or [])],
+                    "ref_schema": ref_schema,
+                    "ref_table": ref_table_norm,
+                    "ref_cols": remote_cols,
+                }
             )
-            schema = "model_draft"
-            tables.append(
-                sa.Table(
-                    table_name,
-                    db.metadata,
-                    *columns,
-                    schema=schema,
-                    extend_existing=True,
-                )
+
+            # If target isn’t just ('id',) and the target table is in this batch,
+            # we’ll need a UNIQUE on that target to satisfy FK requirement.
+            key = f"{ref_schema}.{ref_table_norm}"
+            if not (len(remote_cols) == 1 and remote_cols[0] == "id"):
+                unique_needed.setdefault(key, set()).add(remote_cols)
+
+    # ---- PASS 2A: add UNIQUE constraints required by in-batch FK targets ----
+    for key, uniq_sets in unique_needed.items():
+        tbl = built.get(key)
+        if tbl is None:
+            # referenced table not being created now; cannot add UNIQUE here
+            continue
+        existing = {
+            tuple(col.name for col in uc.columns)
+            for uc in tbl.constraints
+            if isinstance(uc, sa.UniqueConstraint)
+        }
+        for cols in uniq_sets:
+            if cols in existing:
+                continue
+            if len(cols) == 1:
+                col = tbl.c.get(cols[0])
+                if col is not None and (
+                    col.primary_key or getattr(col, "unique", False)
+                ):
+                    continue
+            uc_name = f"uq_{tbl.name}_" + "_".join(cols)
+            tbl.append_constraint(sa.UniqueConstraint(*cols, name=uc_name))
+
+    # ---- PASS 2B: attach FK constraints when safe ----
+    for spec in pending_fks:
+        this_key = f"{spec['this_schema']}.{spec['this_table']}"
+        this_tbl = built.get(this_key)
+        if this_tbl is None:
+            continue
+
+        ref_key = f"{spec['ref_schema']}.{spec['ref_table']}"
+        local_cols = spec["local_cols"]
+        ref_cols = spec["ref_cols"]
+
+        # Safe to attach FK?
+        safe = False
+        if len(ref_cols) == 1 and ref_cols[0] == "id":
+            safe = True  # PK is always unique
+        elif ref_key in built:
+            safe = True  # we just added UNIQUE on target in this batch
+
+        if not safe:
+            logger.warning(
+                "Skipping FK on %s(%s) -> %s(%s): referenced table not in this batch and "
+                "target column(s) are not the PK. Add a UNIQUE on the target table or include it in the same batch.",
+                this_key,
+                ",".join(local_cols),
+                ref_key,
+                ",".join(ref_cols),
             )
+            continue
+
+        # Attach table-level FK constraint (supports composite)
+        this_tbl.append_constraint(
+            sa.ForeignKeyConstraint(local_cols, [f"{ref_key}.{c}" for c in ref_cols])
+        )
+
     return tables
 
 
@@ -274,7 +378,7 @@ def check_oep_api_schema_whitelist(oem_schema):
     if oem_schema in api_open_schema:
         return True
     else:
-        logging.info(
+        logger.info(
             "The OEP-API does not allow to write un-reviewed data to another schema then 'model_draft' or 'sandbox'"
         )
         return False
@@ -300,8 +404,9 @@ def select_oem_dir(oem_folder_name=None, filename=None):
         raise FileNotFoundError
 
 
-def collect_tables_from_oem(db: DB, oem_folder_path):
+def collect_tables_from_oem_files(db: DB, oem_folder_path):
     tables = []
+
     metadata_files = [
         str(file) for file in oem_folder_path.iterdir() if file.suffix == ".json"
     ]
@@ -309,9 +414,9 @@ def collect_tables_from_oem(db: DB, oem_folder_path):
     for metadata_file in metadata_files:
         try:
             md_tables = create_tables_from_metadata_file(db, metadata_file)
-            logging.info(md_tables)
-        except:
-            logging.error(
+            logger.info(md_tables)
+        except Exception:
+            logger.error(
                 f'Could not generate tables from metadatafile: "{metadata_file}"'
             )
             raise
@@ -320,8 +425,26 @@ def collect_tables_from_oem(db: DB, oem_folder_path):
     return order_tables_by_foreign_keys(tables)
 
 
+def collect_tables_from_oem_object(db: DB, oems: list):
+    tables = []
+
+    for metadata in oems:
+        try:
+            md_tables = create_tables_from_metadata_file(db, metadata)
+            logger.info(md_tables)
+        except Exception:
+            logger.error(
+                "Could not generate tables from metadata object: "
+                f'{metadata.get("name", "unknown")}'
+            )
+            raise
+        tables.extend(md_tables)
+
+    return order_tables_by_foreign_keys(tables)
+
+
 def load_json(filepath):
-    logging.info("Reading metadata: %s" % filepath)
+    logger.info("Reading metadata: %s" % filepath)
     with open(filepath, "rb") as f:
         return json.load(f)
 
@@ -359,9 +482,9 @@ def mdToDict(oem_folder_path, file_name=None):
                     return data
 
                 except FileNotFoundError:
-                    logging.error("Unable to load the file: " + json_file)
+                    logger.error("Unable to load the file: " + json_file)
     else:
-        logging.error("Please provide the name of the metadata file")
+        logger.error("Please provide the name of the metadata file")
 
 
 def parseDatapackageToString(oem_folder_path, datapackage_name=None, table_name=None):
@@ -375,19 +498,23 @@ def parseDatapackageToString(oem_folder_path, datapackage_name=None, table_name=
     raise NotImplemented
 
 
-def api_updateMdOnTable(metadata, token=None):
+def api_updateMdOnTable(metadata, table: str, token=None):
     """ """
-    schema = getTableSchemaNameFromOEM(metadata)[0]
-    table = getTableSchemaNameFromOEM(metadata)[1]
+    schema = "data"
+    # table = getTableSchemaNameFromOEM(metadata)[1]
 
-    logging.info(f"Update metadata on table: {table}")
+    logger.info(f"Update metadata on table: {table}")
     api_action = setupApiAction(schema, table, token)
-    resp = requests.post(api_action.dest_url, json=metadata, headers=api_action.headers)
+    resp = requests.post(
+        api_action.dest_url,
+        json=metadata,
+        headers=api_action.headers,
+    )
     if resp.status_code == 200:
-        logging.info(f"METADATA SUCCESSFULLY UPDATED: {table}")
-        logging.info(f"Link to updated metadata on OEP: {api_action.dest_url}")
+        logger.info(f"METADATA SUCCESSFULLY UPDATED: {table}")
+        logger.info(f"Link to updated metadata on OEP: {api_action.dest_url}")
     else:
-        oep_err_msg_header = re.search("<h3>(.*)</h3>", resp.text).group(1)
+        oep_err_msg_header = re.search("<h3>(.*)</h3>", resp.text)
         err_message = (
             f"Uploading of metadata failed. HTTPS response from OEP: {resp.status_code}, Message: {oep_err_msg_header}, URL: {resp.url}"
             ""
@@ -402,29 +529,44 @@ def api_updateMdOnTable(metadata, token=None):
             raise MetadataError(err_message, resp.json())
 
 
+def push_resource_meta(
+    resource: dict, *, table: str, version: str = "2.0", token=None
+) -> None:
+    """
+    Build a minimal OEM v2 doc using omi's template, drop in the single resource,
+    validate, then POST to /meta.
+    """
+    spec = get_metadata_specification(version)
+    base = deepcopy(spec.template) if spec.template else {"resources": [{}]}
+    # keep optional helpful parts from example
+    if spec.example and "@context" in spec.example:
+        base["@context"] = deepcopy(spec.example["@context"])
+    if spec.example and "metaMetadata" in spec.example:
+        base["metaMetadata"] = deepcopy(spec.example["metaMetadata"])
+
+    base["resources"] = [resource]
+    validate_metadata(base, check_license=False)
+
+    if not token:
+        token = setUserToken()
+
+    api_updateMdOnTable(base, table, token)
+
+
 def api_downloadMd(schema, table, token=None):
     """ """
-    logging.info("DOWNLOAD_METADATA")
+    logger.info("DOWNLOAD_METADATA")
     api_action = setupApiAction(schema, table, token)
     res = requests.get(api_action.dest_url)
     res = res.json()
-    logging.info("   ok.")
+    logger.info("   ok.")
     return res
 
 
 def saveMdToJson(data, filepath, encoding="utf-8"):
-    logging.info("saving %s" % filepath)
+    logger.info("saving %s" % filepath)
     with open(filepath, "w", encoding=encoding) as f:
         return json.dump(data, f, sort_keys=True, indent=2)
-
-
-def moveTableToSchema(engine, destination_schema):
-    raise NotImplemented
-
-
-# TODO: rename or remove this function - functionality moved to oep_complicance module, keep to avoide 3. party implementation errors
-def omi_validateMd(data: dict, jsonschema_validation=False):
-    run_metadata_checks(oemetadata=data, check_jsonschema=jsonschema_validation)
 
 
 def getTableSchemaNameFromOEM(metadata):
@@ -433,13 +575,18 @@ def getTableSchemaNameFromOEM(metadata):
         if "." in schema_name:
             schema, tablename = schema_name.split(".")
             return schema, tablename
-    except:
+        else:
+            return None, metadata["resources"][0]["name"]
+    except Exception:
         raise Exception("table name not found in metadata (name in resource[0])")
 
 
-def setUserToken():
+def setUserToken(token=None):
     # Simple user input.
     # This function is implemented as helper
+
+    if token:
+        return token
 
     try:
         token = os.environ["OEP_TOKEN"]

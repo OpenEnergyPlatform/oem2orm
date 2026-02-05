@@ -42,7 +42,7 @@ using oedialect and the http API of the oeplatform website.
 ### oem2orm generator
 
 The table objects (ORM) are generated on the fly from an oemetadata.json file. [oemetadata](https://github.com/OpenEnergyPlatform/oemetadata) is a metadata specification of the Open Energy Family. It includes about 50 fields that can be used to provide metadata for tabular data resources.
-A subset of these fields are grouped in the key "resources" ([see out example](https://github.com/OpenEnergyPlatform/oemetadata/blob/develop/metadata/v160/example.json#L237-L388)) in the metadata. These fields describe the schema of
+A subset of these fields are grouped in the key "resources" ([see out example](https://github.com/OpenEnergyPlatform/oemetadata/blob/develop/oemetadata/v2/v20/example.json)) in the metadata. These fields describe the schema of
 the data table (like table name, columns,  data types & table relations).
 
 The method oem2orm provides to create data tables on the OEP. It is especially useful if you attempt to automate the table creation and already use python or already have a oemetadata file available. The alternatives are:
