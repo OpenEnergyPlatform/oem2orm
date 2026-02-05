@@ -6,17 +6,18 @@ __author__ = "henhuy"
 import sqlalchemy as sa
 import sqlalchemy.dialects.postgresql as psql
 from geoalchemy2 import Geometry
-from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, HSTORE
 
 
 class DatabaseTypes:
     types = {
         # basic types
         "bigint": sa.BIGINT,
+        "serial": sa.BIGINT,  # bigserial not available in sqlalchemy
         "int": sa.INTEGER,
         "integer": sa.INTEGER,
         "varchar": sa.VARCHAR,
         "json": sa.JSON,
+        "object": sa.JSON,
         "text": sa.TEXT,
         "timestamp": sa.TIMESTAMP,
         "interval": sa.Interval,
@@ -24,9 +25,12 @@ class DatabaseTypes:
         "float": sa.FLOAT,
         "boolean": sa.Boolean,
         "date": sa.Date,
-        "hstore": HSTORE,
+        "datetime": sa.DateTime,
+        "hstore": psql.HSTORE,
         "decimal": sa.DECIMAL,
         "numeric": sa.NUMERIC,
+        "number": sa.NUMERIC,
+        "any": sa.VARCHAR,
         # Spatial types
         "geometry point": Geometry("POINT", spatial_index=False),
         "geom": Geometry("GEOMETRY", spatial_index=False),
