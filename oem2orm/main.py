@@ -14,12 +14,12 @@ def cli():
 def create_tables(metadata_folder):
     db = oep_oedialect_oem2orm.setup_db_connection()
     folder = pathlib.Path.cwd() / metadata_folder
-    tables = oep_oedialect_oem2orm.collect_tables_from_oem(db, folder)
+    tables = oep_oedialect_oem2orm.collect_tables_from_oem_files(db, folder)
     oep_oedialect_oem2orm.create_tables(db, tables)
     if len(tables) == 1:
         # Upload metadata for single table
         metadata = oep_oedialect_oem2orm.mdToDict(metadata_folder)
-        oep_oedialect_oem2orm.api_updateMdOnTable(metadata)
+        oep_oedialect_oem2orm.api_updateMdOnTable(metadata, table=tables[0])
 
 
 @cli.command()
@@ -27,7 +27,7 @@ def create_tables(metadata_folder):
 def delete_tables(metadata_folder):
     db = oep_oedialect_oem2orm.setup_db_connection()
     folder = pathlib.Path.cwd() / metadata_folder
-    tables = oep_oedialect_oem2orm.collect_tables_from_oem(db, folder)
+    tables = oep_oedialect_oem2orm.collect_tables_from_oem_files(db, folder)
     oep_oedialect_oem2orm.delete_tables(db, tables)
 
 
