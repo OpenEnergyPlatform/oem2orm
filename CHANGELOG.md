@@ -32,6 +32,21 @@ Template:
 
 ### Added
 
+-
+
+### Changed
+
+-
+
+### Removed
+
+-
+______________________________________________________________________
+
+## [v0.5.0] - 2025-02-05
+
+### Added
+
 - Normalization module that helps to generate oep compliant data model structure from oemetadata. [#57](https://github.com/OpenEnergyPlatform/oem2orm/pull/57)
 
 - New, robust settings module which does not interfere with 3rd party environment variables using the same variables as oem2orm. [#57](https://github.com/OpenEnergyPlatform/oem2orm/pull/57)
@@ -41,8 +56,6 @@ Template:
 - Enhanced usage of logging. [#57](https://github.com/OpenEnergyPlatform/oem2orm/pull/57)
 
 ### Removed
-
-______________________________________________________________________
 
 ## [v0.4.1] - 2024-04-17
 
